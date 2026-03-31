@@ -1,10 +1,19 @@
 import { ThemedText } from "@/components/themed-text";
 import { api } from "@/convex/_generated/api";
-import { useQuery } from "convex/react";
-import { StyleSheet, Text, View } from "react-native";
+import { useMutation, useQuery } from "convex/react";
+import { useRef, useState } from "react";
+import { Button, StyleSheet, Text, TextInput, View } from "react-native";
 
 export default function HomeScreen() {
   const tasks = useQuery(api.tasks.get);
+  const newVerse = useMutation(api.tasks.update)
+  const ref = useRef<TextInput>(null);
+  const [text, setText] = useState('');
+
+
+  const onAddVerse = () => newVerse({
+            body: text
+          })
 
   return (
     <View
@@ -17,6 +26,26 @@ export default function HomeScreen() {
       {tasks?.map(({ _id, verse }) => (
         <ThemedText key={_id}>{verse}</ThemedText>
       ))}
+
+      <TextInput
+        placeholder="Add a verse!"
+        onChangeText={newText => setText(newText)}
+        defaultValue={text}
+        style={{
+          height: 40,
+          padding: 5,
+          marginHorizontal: 8,
+          borderWidth: 1,
+        }}
+      />
+
+      <Button
+        title="add-verse"
+        onPress={onAddVerse}
+      />
+
+
+      
     </View>
   );
 }
