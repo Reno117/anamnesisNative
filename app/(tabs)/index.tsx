@@ -2,11 +2,15 @@ import { ThemedText } from "@/components/themed-text";
 import { api } from "@/convex/_generated/api";
 import { useMutation, useQuery } from "convex/react";
 import { useRef, useState } from "react";
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { CircleX } from 'lucide-react-native';
+
 
 export default function HomeScreen() {
   const tasks = useQuery(api.tasks.get);
+  const me = useQuery(api.tasks.getMe);
   const newVerse = useMutation(api.tasks.update)
+  const removeVerse = useMutation(api.tasks.removeVerse)
   const ref = useRef<TextInput>(null);
   const [text, setText] = useState('');
 
@@ -14,6 +18,9 @@ export default function HomeScreen() {
   const onAddVerse = () => newVerse({
             body: text
           })
+  
+
+
 
   return (
     <View
@@ -23,8 +30,21 @@ export default function HomeScreen() {
         alignItems: "center",
       }}
     >
+      <ThemedText>Hello {me?.name} ...</ThemedText>
       {tasks?.map(({ _id, verse }) => (
+        <View>
         <ThemedText key={_id}>{verse}</ThemedText>
+        <TouchableOpacity onPress={() => {
+        removeVerse({
+          id: _id
+        })
+      }}>
+            <CircleX color="red" size={48} />
+
+        </TouchableOpacity>
+        
+
+        </View>
       ))}
 
       <TextInput
