@@ -1,52 +1,54 @@
+import { AddVerseModal } from "@/components/AddVerseModal";
 import { ThemedText } from "@/components/themed-text";
+import { VerseList } from "@/components/VerseList";
 import { api } from "@/convex/_generated/api";
+import { authClient } from "@/lib/auth-client";
 import { useMutation, useQuery } from "convex/react";
+import { Link } from "expo-router";
 import { useRef, useState } from "react";
-import { Button, StyleSheet, Text, TextInput, View } from "react-native";
+import { Button, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function HomeScreen() {
-  const tasks = useQuery(api.tasks.get);
-  const newVerse = useMutation(api.tasks.update)
   const ref = useRef<TextInput>(null);
-  const [text, setText] = useState('');
+  const { data: session, isPending } = authClient.useSession();
+  const userId = session?.user.id;
+  if (!userId) return (
 
-
-  const onAddVerse = () => newVerse({
-            body: text
-          })
-
-  return (
-    <View
+    <SafeAreaView
       style={{
         flex: 1,
         justifyContent: "center",
         alignItems: "center",
       }}
     >
-      {tasks?.map(({ _id, verse }) => (
-        <ThemedText key={_id}>{verse}</ThemedText>
-      ))}
 
-      <TextInput
-        placeholder="Add a verse!"
-        onChangeText={newText => setText(newText)}
-        defaultValue={text}
-        style={{
-          height: 40,
-          padding: 5,
-          marginHorizontal: 8,
-          borderWidth: 1,
-        }}
-      />
+      <Text>You sir, are not logged in!</Text>
 
-      <Button
-        title="add-verse"
-        onPress={onAddVerse}
-      />
+    </SafeAreaView>
+
+  )// or a loading/login screen
 
 
-      
-    </View>
+  return (
+  <SafeAreaView style={{ flex: 1 }}>
+  <VerseList userId={userId} />
+
+  <View
+    style={{
+      position: "absolute",
+      top: "50%",
+      left: "50%",
+      transform: [{ translateX: -50 }, { translateY: -50 }],
+    }}
+  >
+  </View>
+
+<Link href='/modal'>
+click me!
+</Link>
+
+</SafeAreaView>
   );
 }
 
