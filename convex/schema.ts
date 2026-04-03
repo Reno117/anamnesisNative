@@ -12,6 +12,10 @@ export default defineSchema({
     text: v.string(),
     addedAt: v.number(),
     tags: v.optional(v.array(v.string())),
+    isMemorized: v.optional(v.boolean()), // optional so existing rows don't break
+    lastReviewedAt: v.optional(v.number()),  // <-- add this
+
+
   })
     .index("by_user", ["userId"])
     .index("by_user_book", ["userId", "book"]),

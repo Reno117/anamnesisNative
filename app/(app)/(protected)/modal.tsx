@@ -77,37 +77,40 @@ export default function AddVerseModal() {
   const apiKey = process.env.EXPO_PUBLIC_BIBLE_API_KEY ?? ""
   const canFetch = translation === "ESV"
 
-  async function handleFetch() {
-    if (!chapter || !verseStart) {
-      setFetchError("Enter chapter and verse first.")
-      return
-    }
-    setFetching(true)
-    setFetchError("")
-    setText("")
-    try {
-      const bibleId = BIBLE_IDS.ESV
-      const bookCode = BOOK_ID_MAP[book]
-      const passageId = verseEnd
-        ? `${bookCode}.${chapter}.${verseStart}-${bookCode}.${chapter}.${verseEnd}`
-        : `${bookCode}.${chapter}.${verseStart}`
-      const res = await fetch(
-        `https://api.scripture.api.bible/v1/bibles/${bibleId}/passages/${passageId}?content-type=text&include-verse-numbers=false`,
-        { headers: { "api-key": apiKey } }
-      )
-      const data = await res.json()
-      const fetched = data?.data?.content?.trim()
-      if (!fetched) {
-        setFetchError("Verse not found. Check the reference and try again.")
-      } else {
-        setText(fetched)
-      }
-    } catch {
-      setFetchError("Fetch failed. Check your API key and connection.")
-    } finally {
-      setFetching(false)
-    }
+async function handleFetch() {
+  if (!chapter || !verseStart) {
+    setFetchError("Enter chapter and verse first.")
+    return
   }
+  setFetching(true)
+  setFetchError("")
+  setText("")
+  try {
+    const passage = verseEnd
+      ? `${book} ${chapter}:${verseStart}-${verseEnd}`
+      : `${book} ${chapter}:${verseStart}`
+
+    const res = await fetch(
+      `https://api.esv.org/v3/passage/text/?q=${encodeURIComponent(passage)}&include-headings=false&include-footnotes=false&include-verse-numbers=false&include-short-copyright=false&include-passage-references=false`,
+      {
+        headers: {
+          Authorization: `Token ${apiKey}`,
+        },
+      }
+    )
+    const data = await res.json()
+    const fetched = data?.passages?.[0]?.trim()
+    if (!fetched) {
+      setFetchError("Verse not found. Check the reference and try again.")
+    } else {
+      setText(fetched)
+    }
+  } catch {
+    setFetchError("Fetch failed. Check your API key and connection.")
+  } finally {
+    setFetching(false)
+  }
+}
 
   async function handleSave() {
     if (!userId) {
