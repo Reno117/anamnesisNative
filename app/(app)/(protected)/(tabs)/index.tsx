@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   View,
   Text,
@@ -11,24 +11,31 @@ import { Link, useRouter } from "expo-router"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { authClient } from "@/lib/auth-client"
 import { VerseList } from "@/components/VerseList"
+import { useMutation } from "convex/react"
+import { api } from "@/convex/_generated/api"
 
 type SortOption = "recent" | "book" | "memorized"
 
 export default function HomeScreen() {
-  const { data: session } = authClient.useSession()
-  const userId = session?.user?.id
-  const router = useRouter()
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
+  const router = useRouter();
 
-  const [search, setSearch] = useState("")
-  const [sort, setSort] = useState<SortOption>("recent")
+  const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<SortOption>("recent");
 
   if (!userId) {
     return (
       <SafeAreaView style={styles.centered}>
         <Text style={styles.notLoggedIn}>You are not logged in.</Text>
       </SafeAreaView>
-    )
+    );
   }
+  const ensureUncategorized = useMutation(api.collections.ensureUncategorized);
+
+  useEffect(() => {
+    if (userId) ensureUncategorized({ userId });
+  }, [userId]);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -69,8 +76,17 @@ export default function HomeScreen() {
               style={[styles.sortPill, sort === opt && styles.sortPillActive]}
               onPress={() => setSort(opt)}
             >
-              <Text style={[styles.sortPillText, sort === opt && styles.sortPillTextActive]}>
-                {opt === "recent" ? "Recently Added" : opt === "book" ? "By Book" : "Memorized"}
+              <Text
+                style={[
+                  styles.sortPillText,
+                  sort === opt && styles.sortPillTextActive,
+                ]}
+              >
+                {opt === "recent"
+                  ? "Recently Added"
+                  : opt === "book"
+                    ? "By Book"
+                    : "Memorized"}
               </Text>
             </TouchableOpacity>
           ))}
@@ -80,7 +96,7 @@ export default function HomeScreen() {
       {/* List */}
       <VerseList userId={userId} search={search} sort={sort} />
     </SafeAreaView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -137,4 +153,4 @@ const styles = StyleSheet.create({
   sortPillActive: { backgroundColor: "#1a1a1a" },
   sortPillText: { fontSize: 13, color: "#666", fontWeight: "500" },
   sortPillTextActive: { color: "#fff" },
-})
+});

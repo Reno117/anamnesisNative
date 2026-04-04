@@ -17,6 +17,7 @@ import { Id } from "@/convex/_generated/dataModel"
 import { ThemedView } from "@/components/themed-view"
 import { ThemedText } from "@/components/themed-text"
 import * as Haptics from "expo-haptics"
+import { authClient } from "@/lib/auth-client"
 
 
 const TRANSLATIONS = ["ESV", "NIV", "KJV", "NASB", "NLT", "CSB"]
@@ -24,6 +25,8 @@ const TRANSLATIONS = ["ESV", "NIV", "KJV", "NASB", "NLT", "CSB"]
 export default function EditVerseModal() {
   const router = useRouter()
   const { verseId } = useLocalSearchParams<{ verseId: string }>()
+  const { data } = authClient.useSession()
+  const userId = data?.user.id;
 
   const verse = useQuery(api.verses.getVerse, {
     verseId: verseId as Id<"verses">,
@@ -52,6 +55,17 @@ export default function EditVerseModal() {
       setInitialized(true)
     }
   }, [verse, initialized])
+
+  const collectionsForVerse = useQuery(
+  api.collectionVerses.getCollectionsForVerse,
+  verseId && userId ? { verseId: verseId as Id<"verses">, userId } : "skip"
+)
+const allCollections = useQuery(
+  api.collections.listCollections,
+  userId ? { userId } : "skip"
+)
+const addToCollection = useMutation(api.collectionVerses.addVerseToCollection)
+const removeFromCollection = useMutation(api.collectionVerses.removeVerseFromCollection)
 
   async function handleSave() {
     if (!verseId || !chapter || !verseStart || !text) {
@@ -215,6 +229,45 @@ async function handleToggleMemorized() {
           textAlignVertical="top"
         />
 
+        {/* Collections */}
+{allCollections && allCollections.length > 0 && (
+  <View style={{ marginTop: 8 }}>
+    <ThemedText type="defaultSemiBold" style={styles.label}>Collections</ThemedText>
+    <View style={{ gap: 8 }}>
+      {allCollections.map((col) => {
+        const isIn = collectionsForVerse?.some((c) => c?._id === col._id)
+        return (
+          <TouchableOpacity
+            key={col._id}
+            style={[styles.collectionRow, isIn && styles.collectionRowActive]}
+            onPress={() => {
+              if (!userId || !verseId) return
+              if (isIn) {
+                removeFromCollection({
+                  collectionId: col._id,
+                  verseId: verseId as Id<"verses">,
+                  userId,
+                })
+              } else {
+                addToCollection({
+                  collectionId: col._id,
+                  verseId: verseId as Id<"verses">,
+                  userId,
+                })
+              }
+            }}
+          >
+            <Text style={[styles.collectionRowText, isIn && styles.collectionRowTextActive]}>
+              {col.name}
+            </Text>
+            <Text style={styles.collectionRowCheck}>{isIn ? "✓" : "+"}</Text>
+          </TouchableOpacity>
+        )
+      })}
+    </View>
+  </View>
+)}
+
         {saveError ? <Text style={styles.errorText}>{saveError}</Text> : null}
 
         {/* Delete */}
@@ -283,6 +336,16 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: "#1a1a1a", borderColor: "#1a1a1a" },
   chipText: { fontSize: 13, color: "#555", fontWeight: "500" },
   chipTextActive: { color: "#fff" },
+
+  collectionRow: {
+  flexDirection: "row", justifyContent: "space-between", alignItems: "center",
+  borderWidth: 1, borderColor: "#e8e8e8", borderRadius: 10,
+  paddingHorizontal: 14, paddingVertical: 12, backgroundColor: "#fafafa",
+},
+collectionRowActive: { borderColor: "#1a1a1a", backgroundColor: "#f5f5f5" },
+collectionRowText: { fontSize: 15, color: "#555" },
+collectionRowTextActive: { color: "#1a1a1a", fontWeight: "600" },
+collectionRowCheck: { fontSize: 16, color: "#aaa" },
 
   input: {
     borderWidth: 1, borderColor: "#e8e8e8", borderRadius: 10,

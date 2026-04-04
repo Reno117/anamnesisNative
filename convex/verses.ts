@@ -25,13 +25,30 @@ export const listVerses = query({
 export const addVerse = mutation({
   args: { userId: v.string(), ...verseFields },
   handler: async (ctx, args) => {
-    return await ctx.db.insert("verses", {
+    const verseId = await ctx.db.insert("verses", {
       ...args,
       addedAt: Date.now(),
     })
+
+    // Auto-add to Uncategorized collection
+    const collections = await ctx.db
+      .query("collections")
+      .withIndex("by_owner", (q) => q.eq("ownerId", args.userId))
+      .collect()
+
+    const uncategorized = collections.find((c) => c.name === "Uncategorized")
+    if (uncategorized) {
+      await ctx.db.insert("collectionVerses", {
+        collectionId: uncategorized._id,
+        verseId,
+        addedBy: args.userId,
+        addedAt: Date.now(),
+      })
+    }
+
+    return verseId
   },
 })
-
 export const addVerses = mutation({
   args: {
     userId: v.string(),
