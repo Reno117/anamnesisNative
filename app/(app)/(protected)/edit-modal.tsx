@@ -18,6 +18,7 @@ import { ThemedView } from "@/components/themed-view"
 import { ThemedText } from "@/components/themed-text"
 import * as Haptics from "expo-haptics"
 import { authClient } from "@/lib/auth-client"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 
 const TRANSLATIONS = ["ESV", "NIV", "KJV", "NASB", "NLT", "CSB"]
@@ -146,156 +147,171 @@ async function handleToggleMemorized() {
 
   const ref = `${verse.book} ${verse.chapter}:${verse.verseStart}${verse.verseEnd ? `–${verse.verseEnd}` : ""}`
 
-  return (
-    <ThemedView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Reference display */}
-        <Text style={styles.refDisplay}>{ref}</Text>
 
-        {/* Memorized toggle */}
-        <TouchableOpacity
-          style={[styles.memorizedBtn, verse.isMemorized && styles.memorizedBtnActive]}
-          onPress={handleToggleMemorized}
-        >
-          <Text style={[styles.memorizedBtnText, verse.isMemorized && styles.memorizedBtnTextActive]}>
-            {verse.isMemorized ? "✓ Memorized" : "Mark as Memorized"}
-          </Text>
-        </TouchableOpacity>
+    // <SafeAreaView style={styles.container} edges={["top"]}>
+    //   <View style={styles.scroll}>
+    //     <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+    //       <Text style={styles.backBtnText}>‹ Back</Text>
+    //     </TouchableOpacity>
 
-        {/* Translation */}
-        <ThemedText type="defaultSemiBold" style={styles.label}>Translation</ThemedText>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.translationRow}
-        >
-          {TRANSLATIONS.map((t) => (
-            <TouchableOpacity
-              key={t}
-              onPress={() => setTranslation(t)}
-              style={[styles.chip, translation === t && styles.chipActive]}
-            >
-              <Text style={[styles.chipText, translation === t && styles.chipTextActive]}>
-                {t}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
 
-        {/* Chapter / Verse */}
-        <View style={styles.row}>
-          <View style={styles.rowItem}>
-            <ThemedText type="defaultSemiBold" style={styles.label}>Chapter</ThemedText>
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              value={chapter}
-              onChangeText={setChapter}
-            />
-          </View>
-          <View style={styles.rowItem}>
-            <ThemedText type="defaultSemiBold" style={styles.label}>Verse</ThemedText>
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              value={verseStart}
-              onChangeText={setVerseStart}
-            />
-          </View>
-          <View style={styles.rowItem}>
-            <ThemedText type="defaultSemiBold" style={styles.label}>To verse</ThemedText>
-            <TextInput
-              style={styles.input}
-              keyboardType="numeric"
-              placeholder="—"
-              placeholderTextColor="#ccc"
-              value={verseEnd}
-              onChangeText={setVerseEnd}
-            />
-          </View>
-        </View>
-
-        {/* Text */}
-        <ThemedText type="defaultSemiBold" style={styles.label}>Verse Text</ThemedText>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          value={text}
-          onChangeText={setText}
-          multiline
-          textAlignVertical="top"
-        />
-
-        {/* Collections */}
-{allCollections && allCollections.length > 0 && (
-  <View style={{ marginTop: 8 }}>
-    <ThemedText type="defaultSemiBold" style={styles.label}>Collections</ThemedText>
-    <View style={{ gap: 8 }}>
-      {allCollections.map((col) => {
-        const isIn = collectionsForVerse?.some((c) => c?._id === col._id)
-        return (
-          <TouchableOpacity
-            key={col._id}
-            style={[styles.collectionRow, isIn && styles.collectionRowActive]}
-            onPress={() => {
-              if (!userId || !verseId) return
-              if (isIn) {
-                removeFromCollection({
-                  collectionId: col._id,
-                  verseId: verseId as Id<"verses">,
-                  userId,
-                })
-              } else {
-                addToCollection({
-                  collectionId: col._id,
-                  verseId: verseId as Id<"verses">,
-                  userId,
-                })
-              }
-            }}
-          >
-            <Text style={[styles.collectionRowText, isIn && styles.collectionRowTextActive]}>
-              {col.name}
-            </Text>
-            <Text style={styles.collectionRowCheck}>{isIn ? "✓" : "+"}</Text>
-          </TouchableOpacity>
-        )
-      })}
+    return (
+  <SafeAreaView style={styles.container} edges={["top", "bottom"]}>
+    {/* Back button */}
+    <View style={styles.backRow}>
+      <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <Text style={styles.backBtnText}>‹ Back</Text>
+      </TouchableOpacity>
     </View>
-  </View>
-)}
 
-        {saveError ? <Text style={styles.errorText}>{saveError}</Text> : null}
+    <ScrollView
+      contentContainerStyle={styles.scroll}
+      keyboardShouldPersistTaps="handled"
+      showsVerticalScrollIndicator={false}
+    >
+      {/* Reference display */}
+      <Text style={styles.refDisplay}>{ref}</Text>
 
-        {/* Delete */}
-        <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
-          <Text style={styles.deleteBtnText}>Delete Verse</Text>
-        </TouchableOpacity>
+      {/* Memorized toggle */}
+      <TouchableOpacity
+        style={[styles.memorizedBtn, verse.isMemorized && styles.memorizedBtnActive]}
+        onPress={handleToggleMemorized}
+      >
+        <Text style={[styles.memorizedBtnText, verse.isMemorized && styles.memorizedBtnTextActive]}>
+          {verse.isMemorized ? "✓ Memorized" : "Mark as Memorized"}
+        </Text>
+      </TouchableOpacity>
 
-        <View style={{ height: 40 }} />
+      {/* Translation */}
+      <ThemedText type="defaultSemiBold" style={styles.label}>Translation</ThemedText>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.translationRow}
+      >
+        {TRANSLATIONS.map((t) => (
+          <TouchableOpacity
+            key={t}
+            onPress={() => setTranslation(t)}
+            style={[styles.chip, translation === t && styles.chipActive]}
+          >
+            <Text style={[styles.chipText, translation === t && styles.chipTextActive]}>
+              {t}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </ScrollView>
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.cancelBtn} onPress={() => router.dismiss()}>
-          <Text style={styles.cancelBtnText}>Cancel</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.saveBtn, saving && styles.btnDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving
-            ? <ActivityIndicator color="#fff" />
-            : <Text style={styles.saveBtnText}>Save Changes</Text>
-          }
-        </TouchableOpacity>
+      {/* Chapter / Verse */}
+      <View style={styles.row}>
+        <View style={styles.rowItem}>
+          <ThemedText type="defaultSemiBold" style={styles.label}>Chapter</ThemedText>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={chapter}
+            onChangeText={setChapter}
+          />
+        </View>
+        <View style={styles.rowItem}>
+          <ThemedText type="defaultSemiBold" style={styles.label}>Verse</ThemedText>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={verseStart}
+            onChangeText={setVerseStart}
+          />
+        </View>
+        <View style={styles.rowItem}>
+          <ThemedText type="defaultSemiBold" style={styles.label}>To verse</ThemedText>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            placeholder="—"
+            placeholderTextColor="#ccc"
+            value={verseEnd}
+            onChangeText={setVerseEnd}
+          />
+        </View>
       </View>
-    </ThemedView>
-  )
+
+      {/* Text */}
+      <ThemedText type="defaultSemiBold" style={styles.label}>Verse Text</ThemedText>
+      <TextInput
+        style={[styles.input, styles.textArea]}
+        value={text}
+        onChangeText={setText}
+        multiline
+        textAlignVertical="top"
+      />
+
+      {/* Collections */}
+      {allCollections && allCollections.length > 0 && (
+        <View style={{ marginTop: 8 }}>
+          <ThemedText type="defaultSemiBold" style={styles.label}>Collections</ThemedText>
+          <View style={{ gap: 8 }}>
+            {allCollections.map((col) => {
+              const isIn = collectionsForVerse?.some((c) => c?._id === col._id)
+              return (
+                <TouchableOpacity
+                  key={col._id}
+                  style={[styles.collectionRow, isIn && styles.collectionRowActive]}
+                  onPress={() => {
+                    if (!userId || !verseId) return
+                    if (isIn) {
+                      removeFromCollection({
+                        collectionId: col._id,
+                        verseId: verseId as Id<"verses">,
+                        userId,
+                      })
+                    } else {
+                      addToCollection({
+                        collectionId: col._id,
+                        verseId: verseId as Id<"verses">,
+                        userId,
+                      })
+                    }
+                  }}
+                >
+                  <Text style={[styles.collectionRowText, isIn && styles.collectionRowTextActive]}>
+                    {col.name}
+                  </Text>
+                  <Text style={styles.collectionRowCheck}>{isIn ? "✓" : "+"}</Text>
+                </TouchableOpacity>
+              )
+            })}
+          </View>
+        </View>
+      )}
+
+      {saveError ? <Text style={styles.errorText}>{saveError}</Text> : null}
+
+      {/* Delete */}
+      <TouchableOpacity style={styles.deleteBtn} onPress={confirmDelete}>
+        <Text style={styles.deleteBtnText}>Delete Verse</Text>
+      </TouchableOpacity>
+
+      <View style={{ height: 40 }} />
+    </ScrollView>
+
+    {/* Footer */}
+    <View style={styles.footer}>
+      <TouchableOpacity style={styles.cancelBtn} onPress={() => router.dismiss()}>
+        <Text style={styles.cancelBtnText}>Cancel</Text>
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.saveBtn, saving && styles.btnDisabled]}
+        onPress={handleSave}
+        disabled={saving}
+      >
+        {saving
+          ? <ActivityIndicator color="#fff" />
+          : <Text style={styles.saveBtnText}>Save Changes</Text>
+        }
+      </TouchableOpacity>
+    </View>
+  </SafeAreaView>
+)
 }
 
 const styles = StyleSheet.create({
@@ -384,7 +400,15 @@ collectionRowCheck: { fontSize: 16, color: "#aaa" },
     flex: 2, paddingVertical: 14, borderRadius: 12,
     backgroundColor: "#1a1a1a", alignItems: "center",
   },
+  backRow: {
+  paddingHorizontal: 20,
+  paddingTop: 16,
+  paddingBottom: 8,
+},
+
   saveBtnDisabled: { opacity: 0.5 },
   btnDisabled: { opacity: 0.4 },
   saveBtnText: { fontSize: 15, fontWeight: "600", color: "#fff" },
+  backBtnText: { fontSize: 17, color: "#1a1a1a", fontWeight: "500" },
+  backBtn: { padding: 4 },
 })
