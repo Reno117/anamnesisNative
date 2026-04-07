@@ -17,6 +17,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 const TRANSLATIONS = ["ESV", "NIV", "KJV", "NASB", "NLT", "CSB"];
 
@@ -228,6 +229,7 @@ export default function AddVerseModal() {
   }
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
     <ThemedView style={styles.container}>
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -482,7 +484,8 @@ export default function AddVerseModal() {
         </ThemedButton>
       </View>
     </ThemedView>
-  );
+  </SafeAreaView>
+  )
 }
 
 const styles = StyleSheet.create({
