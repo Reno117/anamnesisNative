@@ -1,21 +1,22 @@
-import { useState, useRef } from "react";
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { authClient } from "@/lib/auth-client";
+import { useMutation, useQuery } from "convex/react";
+import { Link, useLocalSearchParams, useRouter } from "expo-router";
+import { useRef, useState } from "react";
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
   ActivityIndicator,
   Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from "react-native";
-import { Link, useRouter, useLocalSearchParams } from "expo-router";
-import { api } from "@/convex/_generated/api";
-import { ThemedView } from "@/components/themed-view";
-import { ThemedText } from "@/components/themed-text";
-import { authClient } from "@/lib/auth-client";
-import { useQuery, useMutation } from "convex/react";
-import { Id } from "@/convex/_generated/dataModel";
 
 const TRANSLATIONS = ["ESV", "NIV", "KJV", "NASB", "NLT", "CSB"];
 
@@ -98,6 +99,11 @@ export default function AddVerseModal() {
   const router = useRouter();
   const { book: bookParam } = useLocalSearchParams<{ book: string }>();
   const book = bookParam ?? "Genesis";
+
+  const bg = useThemeColor({}, "background");
+  const card = useThemeColor({}, "background");
+  const textColor = useThemeColor({}, "text");
+  const muted = useThemeColor({}, "icon");
 
   const { data: session } = authClient.useSession();
   const userId = session?.user?.id;
@@ -241,16 +247,20 @@ export default function AddVerseModal() {
             <TouchableOpacity
               key={t}
               onPress={() => setTranslation(t)}
-              style={[styles.chip, translation === t && styles.chipActive]}
+              style={[
+                styles.chip,
+                { backgroundColor: card, borderColor: muted },
+                translation === t && styles.chipActive,
+              ]}
             >
-              <Text
+              <ThemedText
                 style={[
                   styles.chipText,
                   translation === t && styles.chipTextActive,
                 ]}
               >
                 {t}
-              </Text>
+              </ThemedText>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -262,11 +272,14 @@ export default function AddVerseModal() {
         {Platform.OS === "web" ? (
           <View style={styles.comboWrapper}>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { backgroundColor: card, color: textColor, borderColor: muted },
+              ]}
               value={book === "Genesis" && !bookParam ? "" : book}
               onChangeText={(val) => router.setParams({ book: val })}
               placeholder="Search book..."
-              placeholderTextColor="#aaa"
+              placeholderTextColor={muted}
               // @ts-ignore
               list="books-list"
             />
@@ -280,7 +293,10 @@ export default function AddVerseModal() {
           </View>
         ) : (
           <TouchableOpacity
-            style={styles.bookBtn}
+            style={[
+              styles.bookBtn,
+              { backgroundColor: card, borderColor: muted },
+            ]}
             onPress={() =>
               router.push({
                 pathname: "/book-picker",
@@ -288,8 +304,10 @@ export default function AddVerseModal() {
               })
             }
           >
-            <Text style={styles.bookBtnText}>{book}</Text>
-            <Text style={styles.bookBtnChevron}>›</Text>
+            <ThemedText style={styles.bookBtnText}>{book}</ThemedText>
+            <ThemedText style={[styles.bookBtnChevron, { color: muted }]}>
+              ›
+            </ThemedText>
           </TouchableOpacity>
         )}
 
@@ -300,9 +318,12 @@ export default function AddVerseModal() {
               Chapter
             </ThemedText>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { backgroundColor: card, color: textColor, borderColor: muted },
+              ]}
               placeholder="8"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={muted}
               keyboardType="numeric"
               value={chapter}
               onChangeText={setChapter}
@@ -313,9 +334,12 @@ export default function AddVerseModal() {
               Verse
             </ThemedText>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { backgroundColor: card, color: textColor, borderColor: muted },
+              ]}
               placeholder="1"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={muted}
               keyboardType="numeric"
               value={verseStart}
               onChangeText={setVerseStart}
@@ -326,9 +350,12 @@ export default function AddVerseModal() {
               To verse
             </ThemedText>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                { backgroundColor: card, color: textColor, borderColor: muted },
+              ]}
               placeholder="4"
-              placeholderTextColor="#aaa"
+              placeholderTextColor={muted}
               keyboardType="numeric"
               value={verseEnd}
               onChangeText={setVerseEnd}
@@ -340,18 +367,22 @@ export default function AddVerseModal() {
         {canFetch && (
           <>
             <TouchableOpacity
-              style={[styles.fetchBtn, fetching && styles.btnDisabled]}
+              style={[
+                styles.fetchBtn,
+                { borderColor: textColor },
+                fetching && styles.btnDisabled,
+              ]}
               onPress={handleFetch}
               disabled={fetching}
             >
               {fetching ? (
-                <ActivityIndicator color="#1a1a1a" />
+                <ActivityIndicator color={textColor} />
               ) : (
-                <Text style={styles.fetchBtnText}>Fetch Verse</Text>
+                <ThemedText style={styles.fetchBtnText}>Fetch Verse</ThemedText>
               )}
             </TouchableOpacity>
             {fetchError ? (
-              <Text style={styles.errorText}>{fetchError}</Text>
+              <ThemedText style={styles.errorText}>{fetchError}</ThemedText>
             ) : null}
           </>
         )}
@@ -364,13 +395,17 @@ export default function AddVerseModal() {
           Verse Text
         </ThemedText>
         <TextInput
-          style={[styles.input, styles.textArea]}
+          style={[
+            styles.input,
+            styles.textArea,
+            { backgroundColor: card, color: textColor, borderColor: muted },
+          ]}
           placeholder={
             canFetch
               ? "Tap 'Fetch Verse' to auto-fill, or type manually."
               : "Type or paste the verse text here."
           }
-          placeholderTextColor="#aaa"
+          placeholderTextColor={muted}
           value={text}
           onChangeText={setText}
           multiline
@@ -395,21 +430,27 @@ export default function AddVerseModal() {
                         key={col._id}
                         style={[
                           styles.collectionRow,
-                          isSelected && styles.collectionRowActive,
+                          { backgroundColor: card, borderColor: muted },
+                          isSelected && {
+                            backgroundColor: muted,
+                            borderColor: textColor,
+                          },
                         ]}
                         onPress={() => toggleCollection(col._id)}
                       >
-                        <Text
+                        <ThemedText
                           style={[
                             styles.collectionRowText,
                             isSelected && styles.collectionRowTextActive,
                           ]}
                         >
                           {col.name}
-                        </Text>
-                        <Text style={styles.collectionRowCheck}>
+                        </ThemedText>
+                        <ThemedText
+                          style={[styles.collectionRowCheck, { color: muted }]}
+                        >
                           {isSelected ? "✓" : "+"}
-                        </Text>
+                        </ThemedText>
                       </TouchableOpacity>
                     );
                   })}
@@ -417,26 +458,28 @@ export default function AddVerseModal() {
             </View>
           )}
 
-        {saveError ? <Text style={styles.errorText}>{saveError}</Text> : null}
+        {saveError ? (
+          <ThemedText style={styles.errorText}>{saveError}</ThemedText>
+        ) : null}
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Link href="/" dismissTo style={styles.cancelBtn}>
-          <Text style={styles.cancelBtnText}>Cancel</Text>
+      <View
+        style={{
+          borderTopColor: muted,
+          flexDirection: "row",
+          gap: 12,
+          padding: 24,
+          paddingBottom: Platform.OS === "ios" ? 36 : 24,
+          borderTopWidth: 1,
+        }}
+      >
+        <Link href="/" dismissTo asChild>
+          <ThemedButton variant="outline">Cancel</ThemedButton>
         </Link>
-        <TouchableOpacity
-          style={[styles.saveBtn, saving && styles.btnDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.saveBtnText}>Save Verse</Text>
-          )}
-        </TouchableOpacity>
+        <ThemedButton onPress={handleSave} disabled={saving}>
+          Save Verse
+        </ThemedButton>
       </View>
     </ThemedView>
   );
@@ -445,7 +488,7 @@ export default function AddVerseModal() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   scroll: { padding: 24, paddingBottom: 8 },
-  label: { fontSize: 13, marginBottom: 6, color: "#555" },
+  label: { fontSize: 13, marginBottom: 6 },
   translationRow: { marginBottom: 20 },
   chip: {
     paddingHorizontal: 14,
@@ -456,9 +499,9 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: "#fafafa",
   },
-  chipActive: { backgroundColor: "#1a1a1a", borderColor: "#1a1a1a" },
-  chipText: { fontSize: 13, color: "#555", fontWeight: "500" },
-  chipTextActive: { color: "#fff" },
+  chipActive: { borderColor: "#1a1a1a" },
+  chipText: { fontSize: 13, fontWeight: "500" },
+  chipTextActive: {},
   bookBtn: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -471,8 +514,8 @@ const styles = StyleSheet.create({
     backgroundColor: "#fafafa",
     marginBottom: 16,
   },
-  bookBtnText: { fontSize: 15, color: "#1a1a1a" },
-  bookBtnChevron: { fontSize: 20, color: "#aaa" },
+  bookBtnText: { fontSize: 15 },
+  bookBtnChevron: { fontSize: 20 },
   comboWrapper: { marginBottom: 16 },
   input: {
     borderWidth: 1,
@@ -481,7 +524,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: "#1a1a1a",
     backgroundColor: "#fafafa",
     marginBottom: 12,
   },
@@ -497,9 +539,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#fafafa",
   },
   collectionRowActive: { borderColor: "#1a1a1a", backgroundColor: "#f5f5f5" },
-  collectionRowText: { fontSize: 15, color: "#555" },
-  collectionRowTextActive: { color: "#1a1a1a", fontWeight: "600" },
-  collectionRowCheck: { fontSize: 16, color: "#aaa" },
+  collectionRowText: { fontSize: 15 },
+  collectionRowTextActive: { fontWeight: "600" },
+  collectionRowCheck: { fontSize: 16 },
   textArea: { height: 140, paddingTop: 12 },
   row: { flexDirection: "row", gap: 8 },
   rowItem: { flex: 1 },
@@ -511,33 +553,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 4,
   },
-  fetchBtnText: { fontSize: 15, fontWeight: "600", color: "#1a1a1a" },
+  fetchBtnText: { fontSize: 15, fontWeight: "600" },
   btnDisabled: { opacity: 0.4 },
   errorText: { color: "#c0392b", fontSize: 13, marginTop: 4, marginBottom: 8 },
-  footer: {
-    flexDirection: "row",
-    gap: 12,
-    padding: 24,
-    paddingBottom: Platform.OS === "ios" ? 36 : 24,
-    borderTopWidth: 1,
-    borderTopColor: "#f0f0f0",
-  },
+  footer: {},
+  cancelBtnText: { fontSize: 15, fontWeight: "600" },
   cancelBtn: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "#e0e0e0",
     alignItems: "center",
     justifyContent: "center",
   },
-  cancelBtnText: { fontSize: 15, fontWeight: "600", color: "#555" },
+
   saveBtn: {
-    flex: 2,
+    flex: 1, // ✅ changed from 2 → 1
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: "#1a1a1a",
     alignItems: "center",
+    justifyContent: "center",
   },
-  saveBtnText: { fontSize: 15, fontWeight: "600", color: "#fff" },
+  saveBtnText: { fontSize: 15, fontWeight: "600" },
 });

@@ -10,7 +10,7 @@ import {
   Alert,
   Platform,
 } from "react-native"
-import { useRouter, useLocalSearchParams } from "expo-router"
+import { useRouter, useLocalSearchParams, Link } from "expo-router"
 import { useMutation, useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
@@ -19,6 +19,8 @@ import { ThemedText } from "@/components/themed-text"
 import * as Haptics from "expo-haptics"
 import { authClient } from "@/lib/auth-client"
 import { SafeAreaView } from "react-native-safe-area-context"
+import { ThemedButton } from "@/components/themed-button"
+import { useThemeColor } from "@/hooks/use-theme-color"
 
 
 const TRANSLATIONS = ["ESV", "NIV", "KJV", "NASB", "NLT", "CSB"]
@@ -28,6 +30,10 @@ export default function EditVerseModal() {
   const { verseId } = useLocalSearchParams<{ verseId: string }>()
   const { data } = authClient.useSession()
   const userId = data?.user.id;
+  const bg = useThemeColor({}, "background");
+  const card = useThemeColor({}, "background");
+  const textColor = useThemeColor({}, "text");
+  const muted = useThemeColor({}, "icon");
 
   const verse = useQuery(api.verses.getVerse, {
     verseId: verseId as Id<"verses">,
@@ -160,7 +166,7 @@ async function handleToggleMemorized() {
     {/* Back button */}
     <View style={styles.backRow}>
       <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-        <Text style={styles.backBtnText}>‹ Back</Text>
+        <ThemedText >‹ Back</ThemedText>
       </TouchableOpacity>
     </View>
 
@@ -170,7 +176,7 @@ async function handleToggleMemorized() {
       showsVerticalScrollIndicator={false}
     >
       {/* Reference display */}
-      <Text style={styles.refDisplay}>{ref}</Text>
+      <ThemedText type="defaultSemiBold">{ref}</ThemedText>
 
       {/* Memorized toggle */}
       <TouchableOpacity
@@ -183,7 +189,7 @@ async function handleToggleMemorized() {
       </TouchableOpacity>
 
       {/* Translation */}
-      <ThemedText type="defaultSemiBold" style={styles.label}>Translation</ThemedText>
+      <ThemedText type="defaultSemiBold" >Translation</ThemedText>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -205,7 +211,7 @@ async function handleToggleMemorized() {
       {/* Chapter / Verse */}
       <View style={styles.row}>
         <View style={styles.rowItem}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>Chapter</ThemedText>
+          <ThemedText type="defaultSemiBold">Chapter</ThemedText>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -214,7 +220,7 @@ async function handleToggleMemorized() {
           />
         </View>
         <View style={styles.rowItem}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>Verse</ThemedText>
+          <ThemedText type="defaultSemiBold" >Verse</ThemedText>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -223,7 +229,7 @@ async function handleToggleMemorized() {
           />
         </View>
         <View style={styles.rowItem}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>To verse</ThemedText>
+          <ThemedText type="defaultSemiBold" >To verse</ThemedText>
           <TextInput
             style={styles.input}
             keyboardType="numeric"
@@ -236,7 +242,7 @@ async function handleToggleMemorized() {
       </View>
 
       {/* Text */}
-      <ThemedText type="defaultSemiBold" style={styles.label}>Verse Text</ThemedText>
+      <ThemedText type="defaultSemiBold" >Verse Text</ThemedText>
       <TextInput
         style={[styles.input, styles.textArea]}
         value={text}
@@ -248,7 +254,7 @@ async function handleToggleMemorized() {
       {/* Collections */}
       {allCollections && allCollections.length > 0 && (
         <View style={{ marginTop: 8 }}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>Collections</ThemedText>
+          <ThemedText type="defaultSemiBold" >Collections</ThemedText>
           <View style={{ gap: 8 }}>
             {allCollections.map((col) => {
               const isIn = collectionsForVerse?.some((c) => c?._id === col._id)
@@ -295,20 +301,22 @@ async function handleToggleMemorized() {
     </ScrollView>
 
     {/* Footer */}
-    <View style={styles.footer}>
-      <TouchableOpacity style={styles.cancelBtn} onPress={() => router.dismiss()}>
-        <Text style={styles.cancelBtnText}>Cancel</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.saveBtn, saving && styles.btnDisabled]}
-        onPress={handleSave}
-        disabled={saving}
+      <View
+        style={{
+          borderTopColor: muted,
+          flexDirection: "row",
+          gap: 12,
+          padding: 24,
+          paddingBottom: Platform.OS === "ios" ? 36 : 24,
+          borderTopWidth: 1,
+        }}
       >
-        {saving
-          ? <ActivityIndicator color="#fff" />
-          : <Text style={styles.saveBtnText}>Save Changes</Text>
-        }
-      </TouchableOpacity>
+        <Link href="/" dismissTo asChild>
+          <ThemedButton variant="outline">Cancel</ThemedButton>
+        </Link>
+        <ThemedButton onPress={handleSave} disabled={saving}>
+          Save Verse
+        </ThemedButton>
     </View>
   </SafeAreaView>
 )
