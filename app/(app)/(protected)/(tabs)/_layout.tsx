@@ -1,8 +1,8 @@
 import { Tabs } from "expo-router";
 import React from "react";
 
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { HapticTab } from "@/components/haptic-tab";
-import { IconSymbol } from "@/components/ui/icon-symbol";
 import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 
@@ -11,29 +11,57 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      initialRouteName="index" 
+      initialRouteName="index"
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? "light"].tint,
         headerShown: false,
         tabBarButton: HapticTab,
       }}
     >
+      {/* Home */}
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={28} name="house.fill" color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "home" : "home-outline"}
+              color={color}
+            />
           ),
         }}
       />
-      {/* <Tabs.Screen
-        name="explore"
+
+      {/* Collections */}
+      <Tabs.Screen
+        name="collections"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: "Collections",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "folder" : "folder-outline"}
+              color={color}
+            />
+          ),
         }}
-      /> */}
+      />
+
+      {/* Verse Stats */}
+      <Tabs.Screen
+        name="verse-stats"
+        options={{
+          title: "Verse Stats",
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              size={28}
+              name={focused ? "stats-chart" : "stats-chart-outline"}
+              color={color}
+            />
+          ),
+        }}
+      />
     </Tabs>
   );
 }
