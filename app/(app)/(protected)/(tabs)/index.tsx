@@ -16,6 +16,7 @@ import { api } from "@/convex/_generated/api";
 import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { ThemedButton } from "@/components/themed-button";
 
 type SortOption = "recent" | "book" | "memorized";
 
@@ -120,6 +121,12 @@ export default function HomeScreen() {
 
         {/* List */}
         <VerseList userId={userId} search={search} sort={sort} />
+            <ThemedButton
+              variant="add"
+              onPress={() => router.push("/modal")}
+            >
+            + Add Verse
+            </ThemedButton>
       </ThemedView>
     </SafeAreaView>
   );
@@ -151,12 +158,28 @@ const styles = StyleSheet.create({
     letterSpacing: -0.8,
   },
 
+  // addBtn: {
+  //   backgroundColor: "#1a1a1a",
+  //   paddingHorizontal: 16,
+  //   paddingVertical: 8,
+  //   borderRadius: 20,
+  // },
   addBtn: {
-    backgroundColor: "#1a1a1a",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
+  position: "absolute",
+  bottom: 30, // adjust depending on tab bar height
+  right: 20,
+  backgroundColor: "#1a1a1a",
+  paddingHorizontal: 16,
+  paddingVertical: 10,
+  borderRadius: 20,
+
+  // optional: shadow for nicer UI
+  elevation: 4, // Android
+  shadowColor: "#000",
+  shadowOpacity: 0.2,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 2 },
+},
 
   addBtnText: {
     color: "#fff",

@@ -5,12 +5,13 @@ import {
   StyleSheet,
   FlatList,
   ActivityIndicator,
-  RefreshControl,
+  useColorScheme,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { ThemedText } from "@/components/themed-text"
+import { useThemeColor } from "@/hooks/use-theme-color"
 
 type SortOption = "recent" | "book" | "memorized"
 
@@ -23,6 +24,23 @@ interface Props {
 export function VerseList({ userId, search, sort }: Props) {
   const router = useRouter()
   const verses = useQuery(api.verses.listVerses, { userId })
+  const scheme = useColorScheme()
+
+  // ── Theme tokens ──────────────────────────────────────────────
+  const bg          = useThemeColor({}, "background")
+  const surface     = useThemeColor({ light: "#ffffff",     dark: "#1c1c1e" }, "background")
+  const border      = useThemeColor({ light: "#ece9e3",     dark: "#2c2c2e" }, "border")
+  const textPrimary = useThemeColor({}, "text")
+  const textMuted   = useThemeColor({ light: "#aaaaaa",     dark: "#636366" }, "tabIconDefault")
+  const shadow      = scheme === "dark" ? "transparent" : "#000"
+
+  // Memorized card theming
+  const memorizedSurface = useThemeColor({ light: "#f5fbf5", dark: "#1a2a1a" }, "background")
+  const memorizedBorder  = useThemeColor({ light: "#c8e6c9", dark: "#2a4a2a" }, "border")
+  const memorizedBadgeBg = useThemeColor({ light: "#e8f5e9", dark: "#1e3a1e" }, "background")
+  const memorizedText    = useThemeColor({ light: "#388e3c", dark: "#81c784" }, "text")
+  const verseText        = useThemeColor({ light: "#444444", dark: "#ababab" }, "text")
+  const refText          = useThemeColor({ light: "#000000", dark: "#f2f2f7" }, "text")
 
   const filtered = useMemo(() => {
     if (!verses) return []
@@ -57,7 +75,7 @@ export function VerseList({ userId, search, sort }: Props) {
   if (verses === undefined) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator color="#1a1a1a" />
+        <ActivityIndicator color={textPrimary} />
       </View>
     )
   }
@@ -65,8 +83,12 @@ export function VerseList({ userId, search, sort }: Props) {
   if (verses.length === 0) {
     return (
       <View style={styles.centered}>
-        <ThemedText type="defaultSemiBold" style={styles.emptyTitle}>No verses yet</ThemedText>
-        <ThemedText style={styles.emptySubtitle}>Tap + Add to get started</ThemedText>
+        <ThemedText type="defaultSemiBold" style={[styles.emptyTitle, { color: textPrimary }]}>
+          No verses yet
+        </ThemedText>
+        <ThemedText style={[styles.emptySubtitle, { color: textMuted }]}>
+          Tap + Add to get started
+        </ThemedText>
       </View>
     )
   }
@@ -74,8 +96,12 @@ export function VerseList({ userId, search, sort }: Props) {
   if (filtered.length === 0) {
     return (
       <View style={styles.centered}>
-        <ThemedText type="defaultSemiBold" style={styles.emptyTitle}>No results</ThemedText>
-        <ThemedText style={styles.emptySubtitle}>Try a different search</ThemedText>
+        <ThemedText type="defaultSemiBold" style={[styles.emptyTitle, { color: textPrimary }]}>
+          No results
+        </ThemedText>
+        <ThemedText style={[styles.emptySubtitle, { color: textMuted }]}>
+          Try a different search
+        </ThemedText>
       </View>
     )
   }
@@ -89,8 +115,18 @@ export function VerseList({ userId, search, sort }: Props) {
         const ref = `${item.book} ${item.chapter}:${item.verseStart}${item.verseEnd ? `–${item.verseEnd}` : ""}`
         return (
           <TouchableOpacity
-            style={[styles.card, item.isMemorized && styles.cardMemorized]}
-            
+            style={[
+              styles.card,
+              {
+                backgroundColor: surface,
+                borderColor: border,
+                shadowColor: shadow,
+              },
+              item.isMemorized && {
+                backgroundColor: memorizedSurface,
+                borderColor: memorizedBorder,
+              },
+            ]}
             onPress={() =>
               router.push({
                 pathname: "/(app)/(protected)/practice",
@@ -101,10 +137,11 @@ export function VerseList({ userId, search, sort }: Props) {
           >
             <View style={styles.cardHeader}>
               <View style={styles.refRow}>
-                <ThemedText style={styles.ref}>{ref}</ThemedText>
+                <ThemedText style={[styles.ref, { color: refText }]}>{ref}</ThemedText>
                 <View style={styles.cardHeaderRight}>
-                  <ThemedText style={styles.translation}>{item.translation}</ThemedText>
-                  {/* Edit button */}
+                  <ThemedText style={[styles.translation, { color: textMuted }]}>
+                    {item.translation}
+                  </ThemedText>
                   <TouchableOpacity
                     onPress={() =>
                       router.push({
@@ -115,17 +152,19 @@ export function VerseList({ userId, search, sort }: Props) {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={styles.editBtn}
                   >
-                    <ThemedText style={styles.editBtnText}>✎</ThemedText>
+                    <ThemedText style={[styles.editBtnText, { color: textMuted }]}>✎</ThemedText>
                   </TouchableOpacity>
                 </View>
               </View>
               {item.isMemorized && (
-                <View style={styles.memorizedBadge}>
-                  <ThemedText style={styles.memorizedBadgeText}>✓ Memorized</ThemedText>
+                <View style={[styles.memorizedBadge, { backgroundColor: memorizedBadgeBg }]}>
+                  <ThemedText style={[styles.memorizedBadgeText, { color: memorizedText }]}>
+                    ✓ Memorized
+                  </ThemedText>
                 </View>
               )}
             </View>
-            <ThemedText style={styles.verseText} numberOfLines={3}>
+            <ThemedText style={[styles.verseText, { color: verseText }]} numberOfLines={3}>
               {item.text}
             </ThemedText>
           </TouchableOpacity>
@@ -137,24 +176,17 @@ export function VerseList({ userId, search, sort }: Props) {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40 },
-  emptyTitle: { fontSize: 17, fontWeight: "600", color: "#1a1a1a", marginBottom: 4 },
-  emptySubtitle: { fontSize: 14, color: "#aaa" },
+  emptyTitle: { fontSize: 17, fontWeight: "600", marginBottom: 4 },
+  emptySubtitle: { fontSize: 14 },
   list: { padding: 16, gap: 10 },
   card: {
-    backgroundColor: "#fff",
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: "#ece9e3",
-    shadowColor: "#000",
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.04,
     shadowRadius: 4,
     elevation: 1,
-  },
-  cardMemorized: {
-    backgroundColor: "#f5fbf5",
-    borderColor: "#c8e6c9",
   },
   cardHeader: { marginBottom: 8 },
   refRow: {
@@ -168,19 +200,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-  ref: { fontSize: 14, fontWeight: "700", letterSpacing: 0.1, color: "black" },
-  translation: { fontSize: 11, color: "#aaa", fontWeight: "500" },
-  editBtn: {
-    padding: 2,
-  },
-  editBtnText: { fontSize: 15, color: "#aaa" },
+  ref: { fontSize: 14, fontWeight: "700", letterSpacing: 0.1 },
+  translation: { fontSize: 11, fontWeight: "500" },
+  editBtn: { padding: 2 },
+  editBtnText: { fontSize: 15 },
   memorizedBadge: {
     alignSelf: "flex-start",
-    backgroundColor: "#e8f5e9",
     borderRadius: 10,
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
-  memorizedBadgeText: { fontSize: 11, color: "#388e3c", fontWeight: "600" },
-  verseText: { fontSize: 15, color: "#444", lineHeight: 22 },
+  memorizedBadgeText: { fontSize: 11, fontWeight: "600" },
+  verseText: { fontSize: 15, lineHeight: 22 },
 })

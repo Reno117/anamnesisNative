@@ -8,7 +8,7 @@ import {
   Platform,
   TouchableOpacity,
 } from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
+import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useQuery, useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
@@ -56,6 +56,8 @@ export default function PracticeFirstLetter() {
     const clean = stripPunctuation(raw)
     const firstLetter = clean[0]?.toLowerCase()
     const isCorrect = letter.toLowerCase() === firstLetter
+    const insets = useSafeAreaInsets();
+
 
     const newState: WordState = isCorrect ? "correct" : "incorrect";
 
@@ -87,14 +89,13 @@ export default function PracticeFirstLetter() {
   if (!verse) return null
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
         <KeyboardAvoidingView
           style={styles.flex}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <ScrollView
             contentContainerStyle={styles.scroll}
+            contentInsetAdjustmentBehavior="automatic"
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
           >
@@ -229,8 +230,6 @@ export default function PracticeFirstLetter() {
             )}
           </ScrollView>
         </KeyboardAvoidingView>
-      </SafeAreaView>
-    </ThemedView>
   )
 }
 
@@ -238,7 +237,7 @@ const styles = StyleSheet.create({
   container: { flex: 1 },
   safeArea: { flex: 1 },
   flex: { flex: 1 },
-  scroll: { padding: 24, paddingBottom: 48 },
+  scroll: { padding: 24, paddingTop: 32, paddingBottom: 48 },
 
   backBtn: { marginBottom: 24 },
   backBtnText: { fontSize: 17, fontWeight: "500" },
@@ -310,12 +309,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#fafafa",
   },
 
-  results: { alignItems: "center", paddingTop: 8 },
+  results: { alignItems: "center", paddingTop: 20 },
   percentageText: {
     fontSize: 80,
     fontWeight: "700",
     letterSpacing: -3,
     marginBottom: 8,
+    lineHeight: 100
   },
   resultLabel: { fontSize: 22, marginBottom: 4 },
   resultSub: { fontSize: 15, color: "#aaa", marginBottom: 28 },

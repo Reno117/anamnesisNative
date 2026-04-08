@@ -9,8 +9,9 @@ import {
 } from "react-native";
 
 import { useThemeColor } from "@/hooks/use-theme-color";
+import { useColorScheme } from "react-native";
 
-type ButtonVariant = "default" | "outline" | "destructive";
+type ButtonVariant = "default" | "outline" | "destructive" | "add";
 
 export type ThemedButtonProps = TextProps & {
   lightColor?: string;
@@ -40,6 +41,8 @@ export function ThemedButton({
     "text",
   );
   const background = useThemeColor({}, "background");
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
 
   const variantStyles = {
     default: {
@@ -57,6 +60,11 @@ export function ThemedButton({
       borderColor: "#ef4444",
       textColor: "#ffffff",
     },
+    add: {
+      backgroundColor: isDark ? "#ffffff" : "#111111",
+      borderColor: isDark ? "#ffffff" : "#111111",
+      textColor: isDark ? "#111111" : "#ffffff",
+    },
   };
 
   const current = variantStyles[variant];
@@ -65,11 +73,12 @@ export function ThemedButton({
     <TouchableOpacity
       style={[
         styles.base,
+        variant === "add" && styles.addBase, // 👈 override layout
         {
           backgroundColor: current.backgroundColor,
           borderColor: current.borderColor,
         },
-        disabled && styles.disabled,
+       // disabled && styles.disabled,
         containerStyle,
       ]}
       activeOpacity={0.8}
@@ -86,7 +95,6 @@ export function ThemedButton({
     </TouchableOpacity>
   );
 }
-
 const styles = StyleSheet.create({
   base: {
     flex: 1,
@@ -96,11 +104,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+
+  addBase: {
+    position: "absolute",
+    bottom: 20,
+    right: 20,
+
+    flex: 0, // 👈 overrides flex:1
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 30,
+
+    // shadow
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+  },
+
   text: {
     fontSize: 15,
     fontWeight: "600",
     textAlign: "center",
   },
+
   disabled: {
     opacity: 0.4,
   },

@@ -1,86 +1,236 @@
+import { ThemedText } from "@/components/themed-text";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import { authClient } from "@/lib/auth-client";
 import React, { useState } from "react";
 import {
-  Button,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
+  TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-export default function AuthTestScreen() {
-  const [email, setEmail] = useState("test@test.com");
-  const [password, setPassword] = useState("password123");
+export default function AuthScreen() {
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const textColor = useThemeColor({}, "text");
+  const bg = useThemeColor({}, "background");
+  const surface = useThemeColor({}, "card"); // card surface, not text
+  const border = useThemeColor({}, "border");
+  const inputBg = useThemeColor({}, "inputBackground"); // or secondary surface
+  const primary = useThemeColor({}, "tint");
+  const muted = useThemeColor({}, "tabIconDefault");
 
   const handleSignUp = async () => {
     try {
-      await authClient.signUp.email({ email, password, name: "" });
-    } catch (err: any) {}
+      await authClient.signUp.email({ email, password, name });
+    } catch (err) {}
   };
 
   const handleSignIn = async () => {
     try {
       await authClient.signIn.email({ email, password });
-    } catch (err: any) {}
+    } catch (err) {}
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Auth Test Page</Text>
+    <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={styles.flex}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={[styles.iconWrap, { backgroundColor: surface, borderColor: border }]}>
+              {/* Replace with your icon */}
+              <Text style={{ fontSize: 20 }}>👤</Text>
+            </View>
+            <ThemedText style={styles.title}>Welcome back</ThemedText>
+            <ThemedText style={[styles.subtitle, { color: muted }]}>
+              Sign in to your account to continue
+            </ThemedText>
+          </View>
 
-      <TextInput
-        style={styles.input}
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Email"
-        autoCapitalize="none"
-      />
+          {/* Card */}
+          <View style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
+            {/* Name */}
+            <View style={styles.fieldGroup}>
+              <ThemedText style={[styles.label, { color: muted }]}>Full name</ThemedText>
+              <TextInput
+                style={[styles.input, { color: textColor, borderColor: border, backgroundColor: inputBg }]}
+                placeholder="Jane Smith"
+                placeholderTextColor={muted}
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+                textContentType="name"
+              />
+            </View>
 
-      <TextInput
-        style={styles.input}
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Password"
-        secureTextEntry
-      />
+            {/* Email */}
+            <View style={styles.fieldGroup}>
+              <ThemedText style={[styles.label, { color: muted }]}>Email address</ThemedText>
+              <TextInput
+                style={[styles.input, { color: textColor, borderColor: border, backgroundColor: inputBg }]}
+                placeholder="jane@example.com"
+                placeholderTextColor={muted}
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                textContentType="emailAddress"
+              />
+            </View>
 
-      <View style={styles.buttonGroup}>
-        <Button title="Sign Up" onPress={handleSignUp} />
-        <Button title="Sign In" onPress={handleSignIn} />
-      </View>
-    </ScrollView>
+            {/* Password */}
+            <View style={styles.fieldGroup}>
+              <View style={styles.labelRow}>
+                <ThemedText style={[styles.label, { color: muted }]}>Password</ThemedText>
+                <TouchableOpacity>
+                  <ThemedText style={[styles.forgotText, { color: muted }]}>
+                    Forgot password?
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                style={[styles.input, { color: textColor, borderColor: border, backgroundColor: inputBg }]}
+                placeholder="••••••••"
+                placeholderTextColor={muted}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                textContentType="password"
+              />
+            </View>
+
+            {/* Buttons */}
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={[styles.primaryBtn, { backgroundColor: textColor }]}
+                onPress={handleSignIn}
+                activeOpacity={0.85}
+              >
+                <Text style={[styles.primaryText, { color: bg }]}>Sign in</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.secondaryBtn, { borderColor: border }]}
+                onPress={handleSignUp}
+                activeOpacity={0.7}
+              >
+                <ThemedText style={[styles.secondaryText, { color: textColor }]}>
+                  Create account
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Footer */}
+          <ThemedText style={[styles.footer, { color: muted }]}>
+            By continuing, you agree to our{" "}
+            <Text style={{ color: textColor }}>Terms</Text> and{" "}
+            <Text style={{ color: textColor }}>Privacy Policy</Text>
+          </ThemedText>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    gap: 12,
+  safe: { flex: 1 },
+  flex: { flex: 1 },
+  scroll: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: 24,
+    gap: 24,
+  },
+  header: {
+    gap: 6,
+    marginBottom: 4,
+  },
+  iconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    borderWidth: 0.5,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 10,
+    fontSize: 26,
+    fontWeight: "500",
+  },
+  subtitle: {
+    fontSize: 15,
+  },
+  card: {
+    borderRadius: 16,
+    borderWidth: 0.5,
+    padding: 20,
+    gap: 16,
+  },
+  fieldGroup: {
+    gap: 6,
+  },
+  label: {
+    fontSize: 13,
+    fontWeight: "500",
+  },
+  labelRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  forgotText: {
+    fontSize: 13,
   },
   input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 8,
+    borderWidth: 0.5,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 11,
+    fontSize: 15,
   },
-  buttonGroup: {
+  actions: {
     gap: 10,
+    marginTop: 4,
   },
-  section: {
-    marginTop: 20,
+  primaryBtn: {
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
   },
-  sectionTitle: {
-    fontWeight: "bold",
-    marginBottom: 5,
+  primaryText: {
+    fontSize: 15,
+    fontWeight: "500",
   },
-  logText: {
-    fontSize: 12,
-    marginBottom: 2,
+  secondaryBtn: {
+    paddingVertical: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    borderWidth: 0.5,
+  },
+  secondaryText: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  footer: {
+    textAlign: "center",
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

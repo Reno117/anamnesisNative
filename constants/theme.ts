@@ -17,6 +17,8 @@ export const Colors = {
     tabIconDefault: '#687076',
     border: "#e5e7eb", // 👈 add this
     tabIconSelected: tintColorLight,
+    card: "#f9fafb",          // slightly off-white surface
+    inputBackground: "#f3f4f6",
   },
   dark: {
     text: '#ECEDEE',
@@ -26,6 +28,8 @@ export const Colors = {
     tabIconDefault: '#9BA1A6',
     border: "#2a2a2a", // 👈 add this
     tabIconSelected: tintColorDark,
+    card: "#1f2123",          // lifted surface above the dark bg
+    inputBackground: "#0d0f10",
   },
 };
 
