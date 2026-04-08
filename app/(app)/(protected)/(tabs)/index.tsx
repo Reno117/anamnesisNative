@@ -33,7 +33,16 @@ export default function HomeScreen() {
   // Theme-aware colors for custom elements
   const inputBg = useThemeColor({}, "background");
   const mutedText = useThemeColor({}, "icon");
+
   const textColor = useThemeColor({}, "text")
+  const bg          = useThemeColor({}, "background")
+  const surface     = useThemeColor({ light: "#ffffff",  dark: "#1c1c1e" }, "background")
+  const border      = useThemeColor({ light: "#ece9e3",  dark: "#2c2c2e" }, "border")
+  const textPrimary = useThemeColor({}, "text")
+  const textMuted   = useThemeColor({ light: "#999999",  dark: "#636366" }, "tabIconDefault")
+  const textFaint   = useThemeColor({ light: "#aaaaaa",  dark: "#48484a" }, "tabIconDefault")
+  const pill        = useThemeColor({ light: "#1a1a1a",  dark: "#f2f2f7" }, "text")
+  const pillText    = useThemeColor({ light: "#ffffff",  dark: "#1a1a1a" }, "background")
 
   useEffect(() => {
     if (userId) ensureUncategorized({ userId });
@@ -50,19 +59,12 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: bg }]} edges={["top"]}>
       <ThemedView style={{ flex: 1 }}>
         {/* Header */}
         <ThemedView style={styles.header}>
           <View style={styles.headerTop}>
             <ThemedText style={styles.appTitle}>My Verses</ThemedText>
-
-            <TouchableOpacity
-              style={styles.addBtn}
-              onPress={() => router.push("/modal")}
-            >
-              <ThemedText style={styles.addBtnText}>+ Add</ThemedText>
-            </TouchableOpacity>
           </View>
 
           {/* Search */}
@@ -134,6 +136,9 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: "center", alignItems: "center" },
+  container: {
+    flex: 1,
+  },
 
   notLoggedIn: { fontSize: 16 },
 

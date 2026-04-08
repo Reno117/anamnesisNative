@@ -62,6 +62,7 @@ export default function PracticeModal() {
                 <ScrollView
                   style={[styles.verseScroll, { maxHeight: SCREEN_HEIGHT * 0.3 }]}
                   showsVerticalScrollIndicator={false}
+                  nestedScrollEnabled={true}  // ← add this
                 >
                   <ThemedText type="defaultSemiBold">{verse?.text}</ThemedText>
                 </ScrollView>
@@ -143,6 +144,8 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     paddingTop: 12,
+    maxHeight: SCREEN_HEIGHT * 0.85, // ← add this
+
   },
   handle: {
     width: 36,
