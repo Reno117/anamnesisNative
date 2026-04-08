@@ -2,10 +2,10 @@ import {
   StyleSheet,
   Text,
   TouchableOpacity,
-  type TextProps,
-  type ViewStyle,
-  type TextStyle,
   type GestureResponderEvent,
+  type TextProps,
+  type TextStyle,
+  type ViewStyle,
 } from "react-native";
 
 import { useThemeColor } from "@/hooks/use-theme-color";
@@ -30,14 +30,14 @@ export function ThemedButton({
   darkColor,
   variant = "default",
   children,
-  onPress,         // ← pulled out of ...rest
-  onLongPress,     // ← pulled out of ...rest
-  disabled,        // ← pulled out of ...rest
-  ...rest          // now only Text props remain
+  onPress, // ← pulled out of ...rest
+  onLongPress, // ← pulled out of ...rest
+  disabled, // ← pulled out of ...rest
+  ...rest // now only Text props remain
 }: ThemedButtonProps) {
   const textColor = useThemeColor(
     { light: lightColor, dark: darkColor },
-    "text"
+    "text",
   );
   const background = useThemeColor({}, "background");
 
@@ -73,13 +73,13 @@ export function ThemedButton({
         containerStyle,
       ]}
       activeOpacity={0.8}
-      onPress={onPress}         // ← now correctly on the touchable
+      onPress={onPress} // ← now correctly on the touchable
       onLongPress={onLongPress} // ← same
-      disabled={disabled}       // ← same
+      disabled={disabled} // ← same
     >
       <Text
         style={[styles.text, { color: current.textColor }, style]}
-        {...rest}  // only Text-safe props now
+        {...rest} // only Text-safe props now
       >
         {children}
       </Text>
@@ -104,4 +104,4 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.4,
   },
-})
+});

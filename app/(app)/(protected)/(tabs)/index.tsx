@@ -32,6 +32,7 @@ export default function HomeScreen() {
   // Theme-aware colors for custom elements
   const inputBg = useThemeColor({}, "background");
   const mutedText = useThemeColor({}, "icon");
+  const textColor = useThemeColor({}, "text")
 
   useEffect(() => {
     if (userId) ensureUncategorized({ userId });
@@ -64,24 +65,19 @@ export default function HomeScreen() {
           </View>
 
           {/* Search */}
-          <View
-            style={[
-              styles.searchWrapper,
-              { backgroundColor: inputBg },
-            ]}
-          >
+          <View style={[styles.searchWrapper, { backgroundColor: inputBg }]}>
             <ThemedText style={[styles.searchIcon, { color: mutedText }]}>
               ⌕
             </ThemedText>
 
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search verses..."
-              placeholderTextColor={mutedText}
-              value={search}
-              onChangeText={setSearch}
-              clearButtonMode="while-editing"
-            />
+              <TextInput
+                style={[styles.searchInput, { color: textColor }]}
+                placeholder="Search verses..."
+                placeholderTextColor={mutedText}
+                value={search}
+                onChangeText={setSearch}
+                clearButtonMode="while-editing"
+              />
           </View>
 
           {/* Sort pills */}
@@ -113,8 +109,8 @@ export default function HomeScreen() {
                     {opt === "recent"
                       ? "Recently Added"
                       : opt === "book"
-                      ? "By Book"
-                      : "Memorized"}
+                        ? "By Book"
+                        : "Memorized"}
                   </ThemedText>
                 </TouchableOpacity>
               );

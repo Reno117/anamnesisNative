@@ -1,15 +1,16 @@
 import { useMemo } from "react"
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   FlatList,
   ActivityIndicator,
+  RefreshControl,
 } from "react-native"
 import { useRouter } from "expo-router"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
+import { ThemedText } from "@/components/themed-text"
 
 type SortOption = "recent" | "book" | "memorized"
 
@@ -27,7 +28,6 @@ export function VerseList({ userId, search, sort }: Props) {
     if (!verses) return []
     let list = [...verses]
 
-    // Search
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(
@@ -38,12 +38,14 @@ export function VerseList({ userId, search, sort }: Props) {
       )
     }
 
-    // Sort
     if (sort === "recent") {
       list.sort((a, b) => b.addedAt - a.addedAt)
     } else if (sort === "book") {
-      list.sort((a, b) =>
-        a.book.localeCompare(b.book) || a.chapter - b.chapter || a.verseStart - b.verseStart
+      list.sort(
+        (a, b) =>
+          a.book.localeCompare(b.book) ||
+          a.chapter - b.chapter ||
+          a.verseStart - b.verseStart
       )
     } else if (sort === "memorized") {
       list.sort((a, b) => (b.isMemorized ? 1 : 0) - (a.isMemorized ? 1 : 0))
@@ -63,8 +65,8 @@ export function VerseList({ userId, search, sort }: Props) {
   if (verses.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyTitle}>No verses yet</Text>
-        <Text style={styles.emptySubtitle}>Tap + Add to get started</Text>
+        <ThemedText type="defaultSemiBold" style={styles.emptyTitle}>No verses yet</ThemedText>
+        <ThemedText style={styles.emptySubtitle}>Tap + Add to get started</ThemedText>
       </View>
     )
   }
@@ -72,8 +74,8 @@ export function VerseList({ userId, search, sort }: Props) {
   if (filtered.length === 0) {
     return (
       <View style={styles.centered}>
-        <Text style={styles.emptyTitle}>No results</Text>
-        <Text style={styles.emptySubtitle}>Try a different search</Text>
+        <ThemedText type="defaultSemiBold" style={styles.emptyTitle}>No results</ThemedText>
+        <ThemedText style={styles.emptySubtitle}>Try a different search</ThemedText>
       </View>
     )
   }
@@ -88,21 +90,44 @@ export function VerseList({ userId, search, sort }: Props) {
         return (
           <TouchableOpacity
             style={[styles.card, item.isMemorized && styles.cardMemorized]}
-            onPress={() => router.push({ pathname: "./edit-modal", params: { verseId: item._id } })}
-            activeOpacity={0.7}
+            
+            onPress={() =>
+              router.push({
+                pathname: "/(app)/(protected)/practice",
+                params: { verseId: item._id },
+              })
+            }
+            activeOpacity={0.9}
           >
             <View style={styles.cardHeader}>
               <View style={styles.refRow}>
-                <Text style={styles.ref}>{ref}</Text>
-                <Text style={styles.translation}>{item.translation}</Text>
+                <ThemedText style={styles.ref}>{ref}</ThemedText>
+                <View style={styles.cardHeaderRight}>
+                  <ThemedText style={styles.translation}>{item.translation}</ThemedText>
+                  {/* Edit button */}
+                  <TouchableOpacity
+                    onPress={() =>
+                      router.push({
+                        pathname: "/(app)/(protected)/edit-modal",
+                        params: { verseId: item._id },
+                      })
+                    }
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    style={styles.editBtn}
+                  >
+                    <ThemedText style={styles.editBtnText}>✎</ThemedText>
+                  </TouchableOpacity>
+                </View>
               </View>
               {item.isMemorized && (
                 <View style={styles.memorizedBadge}>
-                  <Text style={styles.memorizedBadgeText}>✓ Memorized</Text>
+                  <ThemedText style={styles.memorizedBadgeText}>✓ Memorized</ThemedText>
                 </View>
               )}
             </View>
-            <Text style={styles.verseText} numberOfLines={3}>{item.text}</Text>
+            <ThemedText style={styles.verseText} numberOfLines={3}>
+              {item.text}
+            </ThemedText>
           </TouchableOpacity>
         )
       }}
@@ -138,8 +163,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 4,
   },
-  ref: { fontSize: 14, fontWeight: "700", color: "#1a1a1a", letterSpacing: 0.1 },
+  cardHeaderRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  ref: { fontSize: 14, fontWeight: "700", letterSpacing: 0.1, color: "black" },
   translation: { fontSize: 11, color: "#aaa", fontWeight: "500" },
+  editBtn: {
+    padding: 2,
+  },
+  editBtnText: { fontSize: 15, color: "#aaa" },
   memorizedBadge: {
     alignSelf: "flex-start",
     backgroundColor: "#e8f5e9",
