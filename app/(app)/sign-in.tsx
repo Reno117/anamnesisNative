@@ -3,22 +3,27 @@ import { useThemeColor } from "@/hooks/use-theme-color";
 import { authClient } from "@/lib/auth-client";
 import React, { useState } from "react";
 import {
+  Image,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
+  useColorScheme,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AuthScreen() {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [name, setName] = useState("test");
+  const [email, setEmail] = useState("test@test.com");
+  const [password, setPassword] = useState("password123");
+  {
+    /*  CHANGE THIS DEFAULT STATE   */
+  }
+  const scheme = useColorScheme();
 
   const textColor = useThemeColor({}, "text");
   const bg = useThemeColor({}, "background");
@@ -52,24 +57,45 @@ export default function AuthScreen() {
         >
           {/* Header */}
           <View style={styles.header}>
-            <View style={[styles.iconWrap, { backgroundColor: surface, borderColor: border }]}>
-              {/* Replace with your icon */}
-              <Text style={{ fontSize: 20 }}>👤</Text>
+            <View style={[styles.iconWrap]}>
+              <Image
+                source={require("../../assets/images/llamapicture.png")}
+                style={{
+                  width: 200,
+                  height: 200,
+                  resizeMode: "contain",
+                  tintColor: scheme === "dark" ? "#FFFFFF" : "#1A1A1A",
+                }}
+              />
             </View>
-            <ThemedText style={styles.title}>Welcome back</ThemedText>
-            <ThemedText style={[styles.subtitle, { color: muted }]}>
-              Sign in to your account to continue
-            </ThemedText>
           </View>
+          <ThemedText style={styles.title}>Anamnesis</ThemedText>
+          <ThemedText style={[styles.subtitle, { color: muted }]}>
+            Sign in to your account to continue
+          </ThemedText>
 
           {/* Card */}
-          <View style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: surface, borderColor: border },
+            ]}
+          >
             {/* Name */}
             <View style={styles.fieldGroup}>
-              <ThemedText style={[styles.label, { color: muted }]}>Full name</ThemedText>
+              <ThemedText style={[styles.label, { color: muted }]}>
+                Full name
+              </ThemedText>
               <TextInput
-                style={[styles.input, { color: textColor, borderColor: border, backgroundColor: inputBg }]}
-                placeholder="Jane Smith"
+                style={[
+                  styles.input,
+                  {
+                    color: textColor,
+                    borderColor: border,
+                    backgroundColor: inputBg,
+                  },
+                ]}
+                placeholder="Llama Smith"
                 placeholderTextColor={muted}
                 value={name}
                 onChangeText={setName}
@@ -80,9 +106,18 @@ export default function AuthScreen() {
 
             {/* Email */}
             <View style={styles.fieldGroup}>
-              <ThemedText style={[styles.label, { color: muted }]}>Email address</ThemedText>
+              <ThemedText style={[styles.label, { color: muted }]}>
+                Email address
+              </ThemedText>
               <TextInput
-                style={[styles.input, { color: textColor, borderColor: border, backgroundColor: inputBg }]}
+                style={[
+                  styles.input,
+                  {
+                    color: textColor,
+                    borderColor: border,
+                    backgroundColor: inputBg,
+                  },
+                ]}
                 placeholder="jane@example.com"
                 placeholderTextColor={muted}
                 value={email}
@@ -96,7 +131,9 @@ export default function AuthScreen() {
             {/* Password */}
             <View style={styles.fieldGroup}>
               <View style={styles.labelRow}>
-                <ThemedText style={[styles.label, { color: muted }]}>Password</ThemedText>
+                <ThemedText style={[styles.label, { color: muted }]}>
+                  Password
+                </ThemedText>
                 <TouchableOpacity>
                   <ThemedText style={[styles.forgotText, { color: muted }]}>
                     Forgot password?
@@ -104,7 +141,14 @@ export default function AuthScreen() {
                 </TouchableOpacity>
               </View>
               <TextInput
-                style={[styles.input, { color: textColor, borderColor: border, backgroundColor: inputBg }]}
+                style={[
+                  styles.input,
+                  {
+                    color: textColor,
+                    borderColor: border,
+                    backgroundColor: inputBg,
+                  },
+                ]}
                 placeholder="••••••••"
                 placeholderTextColor={muted}
                 value={password}
@@ -129,7 +173,9 @@ export default function AuthScreen() {
                 onPress={handleSignUp}
                 activeOpacity={0.7}
               >
-                <ThemedText style={[styles.secondaryText, { color: textColor }]}>
+                <ThemedText
+                  style={[styles.secondaryText, { color: textColor }]}
+                >
                   Create account
                 </ThemedText>
               </TouchableOpacity>
@@ -157,18 +203,23 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 24,
   },
+  // header: {
+  //   gap: 6,
+  //   marginBottom: 4,
+  // },
+
   header: {
-    gap: 6,
-    marginBottom: 4,
+    flex: 1, // fill the available space
+    justifyContent: "center", // vertical center
+    alignItems: "center", // horizontal center
+    padding: 20,
   },
   iconWrap: {
     width: 48,
     height: 48,
-    borderRadius: 12,
-    borderWidth: 0.5,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: 20,
   },
   title: {
     fontSize: 26,

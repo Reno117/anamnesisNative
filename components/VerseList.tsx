@@ -1,109 +1,147 @@
-import { useMemo } from "react"
+import { ThemedText } from "@/components/themed-text";
+import { api } from "@/convex/_generated/api";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { useQuery } from "convex/react";
+import { useRouter } from "expo-router";
+import { useCallback, useMemo, useState } from "react";
 import {
-  View,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
   ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
   useColorScheme,
-} from "react-native"
-import { useRouter } from "expo-router"
-import { useQuery } from "convex/react"
-import { api } from "@/convex/_generated/api"
-import { ThemedText } from "@/components/themed-text"
-import { useThemeColor } from "@/hooks/use-theme-color"
+  View,
+} from "react-native";
 
-type SortOption = "recent" | "book" | "memorized"
+type SortOption = "recent" | "book" | "memorized";
 
 interface Props {
-  userId: string
-  search: string
-  sort: SortOption
+  userId: string;
+  search: string;
+  sort: SortOption;
 }
 
 export function VerseList({ userId, search, sort }: Props) {
-  const router = useRouter()
-  const verses = useQuery(api.verses.listVerses, { userId })
-  const scheme = useColorScheme()
+  const router = useRouter();
+  const verses = useQuery(api.verses.listVerses, { userId });
+  const scheme = useColorScheme();
 
   // ── Theme tokens ──────────────────────────────────────────────
-  const bg          = useThemeColor({}, "background")
-  const surface     = useThemeColor({ light: "#ffffff",     dark: "#1c1c1e" }, "background")
-  const border      = useThemeColor({ light: "#ece9e3",     dark: "#2c2c2e" }, "border")
-  const textPrimary = useThemeColor({}, "text")
-  const textMuted   = useThemeColor({ light: "#aaaaaa",     dark: "#636366" }, "tabIconDefault")
-  const shadow      = scheme === "dark" ? "transparent" : "#000"
+  const bg = useThemeColor({}, "background");
+  const surface = useThemeColor(
+    { light: "#ffffff", dark: "#1c1c1e" },
+    "background",
+  );
+  const border = useThemeColor({ light: "#ece9e3", dark: "#2c2c2e" }, "border");
+  const textPrimary = useThemeColor({}, "text");
+  const textMuted = useThemeColor(
+    { light: "#aaaaaa", dark: "#636366" },
+    "tabIconDefault",
+  );
+  const shadow = scheme === "dark" ? "transparent" : "#000";
 
   // Memorized card theming
-  const memorizedSurface = useThemeColor({ light: "#f5fbf5", dark: "#1a2a1a" }, "background")
-  const memorizedBorder  = useThemeColor({ light: "#c8e6c9", dark: "#2a4a2a" }, "border")
-  const memorizedBadgeBg = useThemeColor({ light: "#e8f5e9", dark: "#1e3a1e" }, "background")
-  const memorizedText    = useThemeColor({ light: "#388e3c", dark: "#81c784" }, "text")
-  const verseText        = useThemeColor({ light: "#444444", dark: "#ababab" }, "text")
-  const refText          = useThemeColor({ light: "#000000", dark: "#f2f2f7" }, "text")
+  const memorizedSurface = useThemeColor(
+    { light: "#f5fbf5", dark: "#1a2a1a" },
+    "background",
+  );
+  const memorizedBorder = useThemeColor(
+    { light: "#c8e6c9", dark: "#2a4a2a" },
+    "border",
+  );
+  const memorizedBadgeBg = useThemeColor(
+    { light: "#e8f5e9", dark: "#1e3a1e" },
+    "background",
+  );
+  const memorizedText = useThemeColor(
+    { light: "#388e3c", dark: "#81c784" },
+    "text",
+  );
+  const verseText = useThemeColor(
+    { light: "#444444", dark: "#ababab" },
+    "text",
+  );
+  const refText = useThemeColor({ light: "#000000", dark: "#f2f2f7" }, "text");
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    // Simulate a network request
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 500);
+  }, []);
 
   const filtered = useMemo(() => {
-    if (!verses) return []
-    let list = [...verses]
+    if (!verses) return [];
+    let list = [...verses];
 
     if (search.trim()) {
-      const q = search.toLowerCase()
+      const q = search.toLowerCase();
       list = list.filter(
         (v) =>
           v.book.toLowerCase().includes(q) ||
           v.text.toLowerCase().includes(q) ||
-          `${v.book} ${v.chapter}:${v.verseStart}`.toLowerCase().includes(q)
-      )
+          `${v.book} ${v.chapter}:${v.verseStart}`.toLowerCase().includes(q),
+      );
     }
 
     if (sort === "recent") {
-      list.sort((a, b) => b.addedAt - a.addedAt)
+      list.sort((a, b) => b.addedAt - a.addedAt);
     } else if (sort === "book") {
       list.sort(
         (a, b) =>
           a.book.localeCompare(b.book) ||
           a.chapter - b.chapter ||
-          a.verseStart - b.verseStart
-      )
+          a.verseStart - b.verseStart,
+      );
     } else if (sort === "memorized") {
-      list.sort((a, b) => (b.isMemorized ? 1 : 0) - (a.isMemorized ? 1 : 0))
+      list.sort((a, b) => (b.isMemorized ? 1 : 0) - (a.isMemorized ? 1 : 0));
     }
 
-    return list
-  }, [verses, search, sort])
+    return list;
+  }, [verses, search, sort]);
 
   if (verses === undefined) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator color={textPrimary} />
       </View>
-    )
+    );
   }
 
   if (verses.length === 0) {
     return (
       <View style={styles.centered}>
-        <ThemedText type="defaultSemiBold" style={[styles.emptyTitle, { color: textPrimary }]}>
+        <ThemedText
+          type="defaultSemiBold"
+          style={[styles.emptyTitle, { color: textPrimary }]}
+        >
           No verses yet
         </ThemedText>
         <ThemedText style={[styles.emptySubtitle, { color: textMuted }]}>
           Tap + Add to get started
         </ThemedText>
       </View>
-    )
+    );
   }
 
   if (filtered.length === 0) {
     return (
       <View style={styles.centered}>
-        <ThemedText type="defaultSemiBold" style={[styles.emptyTitle, { color: textPrimary }]}>
+        <ThemedText
+          type="defaultSemiBold"
+          style={[styles.emptyTitle, { color: textPrimary }]}
+        >
           No results
         </ThemedText>
         <ThemedText style={[styles.emptySubtitle, { color: textMuted }]}>
           Try a different search
         </ThemedText>
       </View>
-    )
+    );
   }
 
   return (
@@ -111,8 +149,18 @@ export function VerseList({ userId, search, sort }: Props) {
       data={filtered}
       keyExtractor={(v) => v._id}
       contentContainerStyle={styles.list}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="blue" // iOS spinner color
+          colors={["blue", "green", "orange"]} // Android spinner colors
+          title="Refreshing..." // optional iOS title
+          titleColor="blue"
+        />
+      }
       renderItem={({ item }) => {
-        const ref = `${item.book} ${item.chapter}:${item.verseStart}${item.verseEnd ? `–${item.verseEnd}` : ""}`
+        const ref = `${item.book} ${item.chapter}:${item.verseStart}${item.verseEnd ? `–${item.verseEnd}` : ""}`;
         return (
           <TouchableOpacity
             style={[
@@ -137,9 +185,13 @@ export function VerseList({ userId, search, sort }: Props) {
           >
             <View style={styles.cardHeader}>
               <View style={styles.refRow}>
-                <ThemedText style={[styles.ref, { color: refText }]}>{ref}</ThemedText>
+                <ThemedText style={[styles.ref, { color: refText }]}>
+                  {ref}
+                </ThemedText>
                 <View style={styles.cardHeaderRight}>
-                  <ThemedText style={[styles.translation, { color: textMuted }]}>
+                  <ThemedText
+                    style={[styles.translation, { color: textMuted }]}
+                  >
                     {item.translation}
                   </ThemedText>
                   <TouchableOpacity
@@ -152,30 +204,52 @@ export function VerseList({ userId, search, sort }: Props) {
                     hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     style={styles.editBtn}
                   >
-                    <ThemedText style={[styles.editBtnText, { color: textMuted }]}>✎</ThemedText>
+                    <ThemedText
+                      style={[styles.editBtnText, { color: textMuted }]}
+                    >
+                      ✎
+                    </ThemedText>
                   </TouchableOpacity>
                 </View>
               </View>
               {item.isMemorized && (
-                <View style={[styles.memorizedBadge, { backgroundColor: memorizedBadgeBg }]}>
-                  <ThemedText style={[styles.memorizedBadgeText, { color: memorizedText }]}>
+                <View
+                  style={[
+                    styles.memorizedBadge,
+                    { backgroundColor: memorizedBadgeBg },
+                  ]}
+                >
+                  <ThemedText
+                    style={[
+                      styles.memorizedBadgeText,
+                      { color: memorizedText },
+                    ]}
+                  >
                     ✓ Memorized
                   </ThemedText>
                 </View>
               )}
             </View>
-            <ThemedText style={[styles.verseText, { color: verseText }]} numberOfLines={3}>
+            <ThemedText
+              style={[styles.verseText, { color: verseText }]}
+              numberOfLines={3}
+            >
               {item.text}
             </ThemedText>
           </TouchableOpacity>
-        )
+        );
       }}
     />
-  )
+  );
 }
 
 const styles = StyleSheet.create({
-  centered: { flex: 1, justifyContent: "center", alignItems: "center", padding: 40 },
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    padding: 40,
+  },
   emptyTitle: { fontSize: 17, fontWeight: "600", marginBottom: 4 },
   emptySubtitle: { fontSize: 14 },
   list: { padding: 16, gap: 10 },
@@ -212,4 +286,4 @@ const styles = StyleSheet.create({
   },
   memorizedBadgeText: { fontSize: 11, fontWeight: "600" },
   verseText: { fontSize: 15, lineHeight: 22 },
-})
+});
