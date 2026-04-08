@@ -238,6 +238,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -2,
     marginBottom: 8,
+    lineHeight: 100,
   },
   resultLabel: { fontSize: 22, marginBottom: 4 },
   resultSub: { fontSize: 15, color: "#aaa", marginBottom: 28 },
