@@ -48,12 +48,19 @@ export default function AuthScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.flex}
+        behavior={Platform.OS === "ios" ? "padding" : "height"} // try "height" for Android too
+        style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={styles.scroll}
+          contentContainerStyle={[
+            styles.scroll,
+            {
+              flexGrow: 1,
+              paddingBottom: 200, // Increase this — 80 is often not enough
+            },
+          ]}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
         >
           {/* Header */}
           <View style={styles.header}>

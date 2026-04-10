@@ -5,10 +5,12 @@ import { useMutation } from "convex/react";
 import { useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
+  Keyboard,
   ScrollView,
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -75,6 +77,8 @@ export default function HomeScreen() {
       style={[styles.container, { backgroundColor: bg }]}
       edges={["top"]}
     >
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+
       <ThemedView style={{ flex: 1 }}>
         {/* Header */}
         <ThemedView style={styles.header}>
@@ -143,6 +147,7 @@ export default function HomeScreen() {
           + Add Verse
         </ThemedButton>
       </ThemedView>
+      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 }

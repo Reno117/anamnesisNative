@@ -1,27 +1,34 @@
-import {
-  View,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
-  ScrollView,
-  Dimensions,
-} from "react-native"
+import { useEffect, useRef, useCallback } from "react"
+import { View, StyleSheet, TouchableOpacity, useColorScheme } from "react-native"
 import { useLocalSearchParams, useRouter } from "expo-router"
 import { useQuery } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { Id } from "@/convex/_generated/dataModel"
+import {
+  BottomSheetModal,
+  BottomSheetScrollView,
+  BottomSheetBackdrop,
+  BottomSheetModalProvider,
+} from "@gorhom/bottom-sheet"
 import { ThemedText } from "@/components/themed-text"
 import { ThemedButton } from "@/components/themed-button"
-import { ThemedView } from "@/components/themed-view"
 import { SafeAreaView } from "react-native-safe-area-context"
-
-const SCREEN_HEIGHT = Dimensions.get("window").height
-const LONG_VERSE_THRESHOLD = 300 // characters
+import { useThemeColor } from "@/hooks/use-theme-color"
 
 export default function PracticeModal() {
   const router = useRouter()
   const { verseId } = useLocalSearchParams<{ verseId: string }>()
+  const bottomSheetRef = useRef<BottomSheetModal>(null)
+  const scheme = useColorScheme()
+
+  // ── Theme tokens ──────────────────────────────────────────────
+  const surface = useThemeColor({ light: "#ffffff", dark: "#1c1c1e" }, "background")
+  const border = useThemeColor({ light: "#ece9e3", dark: "#2c2c2e" }, "border")
+  const textMuted = useThemeColor({ light: "#aaaaaa", dark: "#636366" }, "tabIconDefault")
+  const dividerColor = useThemeColor({ light: "#f0f0f0", dark: "#2c2c2e" }, "border")
+  const iconBg = useThemeColor({ light: "#f5f5f5", dark: "#2c2c2e" }, "background")
+  const handleColor = useThemeColor({ light: "#dddddd", dark: "#3a3a3c" }, "border")
+  const shadow = scheme === "dark" ? "transparent" : "#000"
 
   const verse = useQuery(api.verses.getVerse, {
     verseId: verseId as Id<"verses">,
@@ -31,9 +38,30 @@ export default function PracticeModal() {
     ? `${verse.book} ${verse.chapter}:${verse.verseStart}${verse.verseEnd ? `–${verse.verseEnd}` : ""}`
     : ""
 
-  const isLong = (verse?.text?.length ?? 0) > LONG_VERSE_THRESHOLD
+  useEffect(() => {
+    if (verse) {
+      bottomSheetRef.current?.present()
+    }
+  }, [verse])
+
+  const handleDismiss = useCallback(() => {
+    router.back()
+  }, [router])
+
+  const renderBackdrop = useCallback(
+    (props: any) => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        pressBehavior="close"
+      />
+    ),
+    []
+  )
 
   function goToMode(mode: "first-letter" | "full-verse") {
+    bottomSheetRef.current?.dismiss()
     router.replace({
       pathname:
         mode === "first-letter"
@@ -44,167 +72,116 @@ export default function PracticeModal() {
   }
 
   return (
-    <TouchableWithoutFeedback onPress={() => router.back()}>
-      <View style={styles.overlay}>
-        <TouchableWithoutFeedback>
-          <ThemedView style={styles.sheet}>
-            <SafeAreaView edges={["bottom"]}>
-              {/* Drag handle */}
-              <View style={styles.handle} />
+    <BottomSheetModalProvider>
+      <View style={styles.container} />
 
-              {/* Reference */}
-              <ThemedText type="defaultSemiBold" style={styles.ref}>
-                {ref}
-              </ThemedText>
+      <BottomSheetModal
+        ref={bottomSheetRef}
+        enableDynamicSizing
+        snapPoints={[]}
+        maxDynamicContentSize={650}
+        onDismiss={handleDismiss}
+        backdropComponent={renderBackdrop}
+        handleIndicatorStyle={[styles.handle, { backgroundColor: handleColor }]}
+        backgroundStyle={{ backgroundColor: surface, shadowColor: shadow }}
+        enablePanDownToClose
+      >
+        <BottomSheetScrollView
+          contentContainerStyle={styles.content}
+          showsVerticalScrollIndicator={false}
+        >
+          <SafeAreaView edges={["bottom"]}>
+            <ThemedText type="defaultSemiBold" style={styles.ref}>
+              {ref}
+            </ThemedText>
 
-              {/* Verse text — scrollable only if long */}
-              {isLong ? (
-                <ScrollView
-                  style={[styles.verseScroll, { maxHeight: SCREEN_HEIGHT * 0.3 }]}
-                  showsVerticalScrollIndicator={false}
-                  nestedScrollEnabled={true}  // ← add this
-                >
-                  <ThemedText type="defaultSemiBold">{verse?.text}</ThemedText>
-                </ScrollView>
-              ) : (
-                <ThemedText type="defaultSemiBold">{verse?.text}</ThemedText>
-              )}
+            <ThemedText type="defaultSemiBold" style={styles.verseText}>
+              {verse?.text}
+            </ThemedText>
 
-              {/* Divider */}
-              <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: dividerColor }]} />
 
-              <ThemedText type="defaultSemiBold" style={styles.practiceLabel}>
-                Choose a practice mode
-              </ThemedText>
+            <ThemedText
+              type="defaultSemiBold"
+              style={[styles.practiceLabel, { color: textMuted }]}
+            >
+              Choose a practice mode
+            </ThemedText>
 
-              {/* Mode buttons */}
-              <TouchableOpacity
-                style={styles.modeCard}
-                onPress={() => goToMode("first-letter")}
-                activeOpacity={0.7}
-              >
-                <View style={styles.modeIcon}>
-                  <ThemedText style={styles.modeIconText}>A</ThemedText>
-                </View>
-                <View style={styles.modeInfo}>
-                  <ThemedText type="defaultSemiBold" style={styles.modeTitle}>
-                    First Letter
-                  </ThemedText>
-                  <ThemedText style={styles.modeSubtitle}>
-                    Type the first letter of each word
-                  </ThemedText>
-                </View>
-                <ThemedText style={styles.modeChevron}>›</ThemedText>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.modeCard}
-                onPress={() => goToMode("full-verse")}
-                activeOpacity={0.7}
-              >
-                <View style={styles.modeIcon}>
-                  <ThemedText style={styles.modeIconText}>≡</ThemedText>
-                </View>
-                <View style={styles.modeInfo}>
-                  <ThemedText type="defaultSemiBold" style={styles.modeTitle}>
-                    Full Verse
-                  </ThemedText>
-                  <ThemedText style={styles.modeSubtitle}>
-                    Type the entire verse from memory
-                  </ThemedText>
-                </View>
-                <ThemedText style={styles.modeChevron}>›</ThemedText>
-              </TouchableOpacity>
-
-              {/* Cancel */}
-              <View style={styles.cancelRow}>
-                <ThemedButton
-                  variant="outline"
-                  onPress={() => router.back()}
-                >
-                  Cancel
-                </ThemedButton>
+            <TouchableOpacity
+              style={[styles.modeCard, { borderColor: border }]}
+              onPress={() => goToMode("first-letter")}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.modeIcon, { backgroundColor: iconBg }]}>
+                <ThemedText style={styles.modeIconText}>A</ThemedText>
               </View>
-            </SafeAreaView>
-          </ThemedView>
-        </TouchableWithoutFeedback>
-      </View>
-    </TouchableWithoutFeedback>
+              <View style={styles.modeInfo}>
+                <ThemedText type="defaultSemiBold" style={styles.modeTitle}>
+                  First Letter
+                </ThemedText>
+                <ThemedText style={[styles.modeSubtitle, { color: textMuted }]}>
+                  Type the first letter of each word
+                </ThemedText>
+              </View>
+              <ThemedText style={[styles.modeChevron, { color: textMuted }]}>›</ThemedText>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modeCard, { borderColor: border }]}
+              onPress={() => goToMode("full-verse")}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.modeIcon, { backgroundColor: iconBg }]}>
+                <ThemedText style={styles.modeIconText}>≡</ThemedText>
+              </View>
+              <View style={styles.modeInfo}>
+                <ThemedText type="defaultSemiBold" style={styles.modeTitle}>
+                  Full Verse
+                </ThemedText>
+                <ThemedText style={[styles.modeSubtitle, { color: textMuted }]}>
+                  Type the entire verse from memory
+                </ThemedText>
+              </View>
+              <ThemedText style={[styles.modeChevron, { color: textMuted }]}>›</ThemedText>
+            </TouchableOpacity>
+
+            <View style={styles.cancelRow}>
+              <ThemedButton variant="outline" onPress={() => bottomSheetRef.current?.dismiss()}>
+                Cancel
+              </ThemedButton>
+            </View>
+          </SafeAreaView>
+        </BottomSheetScrollView>
+      </BottomSheetModal>
+    </BottomSheetModalProvider>
   )
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingTop: 12,
-    maxHeight: SCREEN_HEIGHT * 0.85, // ← add this
-
-  },
-  handle: {
-    width: 36,
-    height: 4,
-    backgroundColor: "#ddd",
-    borderRadius: 2,
-    alignSelf: "center",
-    marginBottom: 20,
-  },
-  ref: {
-    fontSize: 18,
-    marginBottom: 10,
-  },
-  verseScroll: {
-    marginBottom: 16,
-  },
-  verseText: {
-    fontSize: 15,
-    lineHeight: 24,
-    color: "#444",
-    marginBottom: 16,
-  },
-  divider: {
-    height: 1,
-    backgroundColor: "#f0f0f0",
-    marginBottom: 16,
-  },
+  container: { flex: 1, backgroundColor: "transparent" },
+  handle: { width: 36, height: 4, borderRadius: 2 },
+  content: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 24 },
+  ref: { fontSize: 18, marginBottom: 10 },
+  verseText: { fontSize: 15, lineHeight: 24, marginBottom: 16 },
+  divider: { height: 1, marginBottom: 16 },
   practiceLabel: {
-    fontSize: 13,
-    color: "#aaa",
-    marginBottom: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
+    fontSize: 13, marginBottom: 12,
+    textTransform: "uppercase", letterSpacing: 0.5,
   },
   modeCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#ece9e3",
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 10,
-    gap: 12,
+    flexDirection: "row", alignItems: "center",
+    borderWidth: 1, borderRadius: 14,
+    padding: 14, marginBottom: 10, gap: 12,
   },
   modeIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: "#f5f5f5",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 40, height: 40, borderRadius: 10,
+    alignItems: "center", justifyContent: "center",
   },
   modeIconText: { fontSize: 18, fontWeight: "700" },
   modeInfo: { flex: 1 },
   modeTitle: { fontSize: 15 },
-  modeSubtitle: { fontSize: 13, color: "#aaa", marginTop: 2 },
-  modeChevron: { fontSize: 22, color: "#ccc" },
-  cancelRow: {
-    flexDirection: "row",
-    marginTop: 8,
-  },
+  modeSubtitle: { fontSize: 13, marginTop: 2 },
+  modeChevron: { fontSize: 22 },
+  cancelRow: { flexDirection: "row", marginTop: 8 },
 })

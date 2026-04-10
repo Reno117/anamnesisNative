@@ -229,6 +229,8 @@ export default function AddVerseModal() {
           contentContainerStyle={styles.scroll}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
+          keyboardDismissMode="on-drag"
+
         >
           {/* Translation */}
           <ThemedText type="defaultSemiBold" style={styles.label}>
@@ -326,8 +328,6 @@ export default function AddVerseModal() {
                     borderColor: muted,
                   },
                 ]}
-                placeholder="8"
-                placeholderTextColor={muted}
                 keyboardType="numeric"
                 value={chapter}
                 onChangeText={setChapter}
@@ -346,8 +346,6 @@ export default function AddVerseModal() {
                     borderColor: muted,
                   },
                 ]}
-                placeholder="1"
-                placeholderTextColor={muted}
                 keyboardType="numeric"
                 value={verseStart}
                 onChangeText={setVerseStart}
@@ -355,7 +353,7 @@ export default function AddVerseModal() {
             </View>
             <View style={styles.rowItem}>
               <ThemedText type="defaultSemiBold" style={styles.label}>
-                To verse
+                To (Optional)
               </ThemedText>
               <TextInput
                 style={[
@@ -366,8 +364,6 @@ export default function AddVerseModal() {
                     borderColor: muted,
                   },
                 ]}
-                placeholder="4"
-                placeholderTextColor={muted}
                 keyboardType="numeric"
                 value={verseEnd}
                 onChangeText={setVerseEnd}
