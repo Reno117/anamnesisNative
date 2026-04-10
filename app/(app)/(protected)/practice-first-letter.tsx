@@ -1,90 +1,90 @@
-import { useState, useRef } from "react"
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useRef, useState } from "react";
 import {
-  View,
-  StyleSheet,
-  TextInput,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
+  TextInput,
   TouchableOpacity,
-} from "react-native"
-import { SafeAreaView } from "react-native-safe-area-context"
-import { useLocalSearchParams, useRouter } from "expo-router"
-import { useQuery, useMutation } from "convex/react"
-import { api } from "@/convex/_generated/api"
-import { Id } from "@/convex/_generated/dataModel"
-import { ThemedText } from "@/components/themed-text"
-import { ThemedButton } from "@/components/themed-button"
-import { ThemedView } from "@/components/themed-view"
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 function tokenizeVerse(text: string): string[] {
-  return text.split(/\s+/).filter(Boolean)
+  return text.split(/\s+/).filter(Boolean);
 }
 
 function stripPunctuation(word: string): string {
-  return word.replace(/[^a-zA-Z0-9]/g, "")
+  return word.replace(/[^a-zA-Z0-9]/g, "");
 }
 
-type WordState = "pending" | "correct" | "incorrect"
+type WordState = "pending" | "correct" | "incorrect";
 
-const BLANK_WIDTH = 28 // uniform width for all blanks regardless of word length
+const BLANK_WIDTH = 28; // uniform width for all blanks regardless of word length
 
 export default function PracticeFirstLetter() {
-  const router = useRouter()
-  const { verseId } = useLocalSearchParams<{ verseId: string }>()
+  const router = useRouter();
+  const { verseId } = useLocalSearchParams<{ verseId: string }>();
 
   const verse = useQuery(api.verses.getVerse, {
     verseId: verseId as Id<"verses">,
-  })
-  const markReviewed = useMutation(api.verses.markReviewed)
-  const toggleMemorized = useMutation(api.verses.toggleMemorized)
+  });
+  const markReviewed = useMutation(api.verses.markReviewed);
+  const toggleMemorized = useMutation(api.verses.toggleMemorized);
 
-  const words = verse ? tokenizeVerse(verse.text) : []
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [wordStates, setWordStates] = useState<WordState[]>([])
-  const [finished, setFinished] = useState(false)
-  const [inputValue, setInputValue] = useState("")
-  const inputRef = useRef<TextInput>(null)
+  const words = verse ? tokenizeVerse(verse.text) : [];
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [wordStates, setWordStates] = useState<WordState[]>([]);
+  const [finished, setFinished] = useState(false);
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<TextInput>(null);
 
   const ref = verse
     ? `${verse.book} ${verse.chapter}:${verse.verseStart}${verse.verseEnd ? `–${verse.verseEnd}` : ""} · ${verse.translation}`
-    : ""
+    : "";
 
   function handleKeyPress(letter: string) {
-    if (finished || currentIndex >= words.length) return
-    const raw = words[currentIndex]
-    const clean = stripPunctuation(raw)
-    const firstLetter = clean[0]?.toLowerCase()
-    const isCorrect = letter.toLowerCase() === firstLetter
+    if (finished || currentIndex >= words.length) return;
+    const raw = words[currentIndex];
+    const clean = stripPunctuation(raw);
+    const firstLetter = clean[0]?.toLowerCase();
+    const isCorrect = letter.toLowerCase() === firstLetter;
 
     const newState: WordState = isCorrect ? "correct" : "incorrect";
 
     const newStates = [...wordStates, newState];
     setWordStates(newStates);
 
-
-    const nextIndex = currentIndex + 1
-    setCurrentIndex(nextIndex)
+    const nextIndex = currentIndex + 1;
+    setCurrentIndex(nextIndex);
 
     if (nextIndex >= words.length) {
-      setFinished(true)
-      markReviewed({ verseId: verseId as Id<"verses"> })
+      setFinished(true);
+      markReviewed({ verseId: verseId as Id<"verses"> });
     }
   }
 
   function handleRetry() {
-    setCurrentIndex(0)
-    setWordStates([])
-    setFinished(false)
-    setInputValue("")
-    setTimeout(() => inputRef.current?.focus(), 100)
+    setCurrentIndex(0);
+    setWordStates([]);
+    setFinished(false);
+    setInputValue("");
+    setTimeout(() => inputRef.current?.focus(), 100);
   }
 
-  const correctCount = wordStates.filter((s) => s === "correct").length
-  const percentage = words.length > 0 ? Math.round((correctCount / words.length) * 100) : 0
-  const perfect = percentage === 100
+  const correctCount = wordStates.filter((s) => s === "correct").length;
+  const percentage =
+    words.length > 0 ? Math.round((correctCount / words.length) * 100) : 0;
+  const perfect = percentage === 100;
 
-  if (!verse) return null
+  if (!verse) return null;
 
   return (
     <ThemedView style={styles.container}>
@@ -99,7 +99,10 @@ export default function PracticeFirstLetter() {
             showsVerticalScrollIndicator={false}
           >
             {/* Back */}
-            <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <TouchableOpacity
+              onPress={() => router.back()}
+              style={styles.backBtn}
+            >
               <ThemedText style={styles.backBtnText}>‹ Back</ThemedText>
             </TouchableOpacity>
 
@@ -114,29 +117,30 @@ export default function PracticeFirstLetter() {
                 </ThemedText>
 
                 <ThemedText style={styles.instruction}>
-                  Type the first letter of each word — the rest will fill in automatically.
+                  Type the first letter of each word — the rest will fill in
+                  automatically.
                 </ThemedText>
 
                 {/* Word blanks card */}
                 <View style={styles.blanksCard}>
                   <View style={styles.wordsContainer}>
                     {words.map((word, i) => {
-                      const state = wordStates[i]
-                      const isCurrent = i === currentIndex
+                      const state = wordStates[i];
+                      const isCurrent = i === currentIndex;
 
                       if (state === "correct") {
                         return (
                           <ThemedText key={i} style={styles.wordCorrect}>
                             {word}
                           </ThemedText>
-                        )
+                        );
                       }
                       if (state === "incorrect") {
                         return (
                           <ThemedText key={i} style={styles.wordIncorrect}>
                             {word}
                           </ThemedText>
-                        )
+                        );
                       }
                       // Pending — uniform blank dash
                       return (
@@ -147,7 +151,7 @@ export default function PracticeFirstLetter() {
                             isCurrent && styles.blankCurrent,
                           ]}
                         />
-                      )
+                      );
                     })}
                   </View>
                 </View>
@@ -164,8 +168,8 @@ export default function PracticeFirstLetter() {
                   placeholderTextColor="#bbb"
                   onChangeText={(val) => {
                     if (val.length > 0) {
-                      handleKeyPress(val[val.length - 1])
-                      setInputValue("")
+                      handleKeyPress(val[val.length - 1]);
+                      setInputValue("");
                     }
                   }}
                 />
@@ -180,10 +184,10 @@ export default function PracticeFirstLetter() {
                   {perfect
                     ? "Perfect! 🎉"
                     : percentage >= 80
-                    ? "Great job!"
-                    : percentage >= 50
-                    ? "Keep practicing!"
-                    : "Keep at it!"}
+                      ? "Great job!"
+                      : percentage >= 50
+                        ? "Keep practicing!"
+                        : "Keep at it!"}
                 </ThemedText>
                 <ThemedText style={styles.resultSub}>
                   {correctCount} of {words.length} words correct
@@ -214,8 +218,10 @@ export default function PracticeFirstLetter() {
                   {perfect && !verse.isMemorized && (
                     <ThemedButton
                       onPress={async () => {
-                        await toggleMemorized({ verseId: verseId as Id<"verses"> })
-                        router.back()
+                        await toggleMemorized({
+                          verseId: verseId as Id<"verses">,
+                        });
+                        router.back();
                       }}
                     >
                       Mark Memorized
@@ -231,7 +237,7 @@ export default function PracticeFirstLetter() {
         </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
-  )
+  );
 }
 
 const styles = StyleSheet.create({
@@ -248,6 +254,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: -0.5,
     marginBottom: 6,
+    lineHeight: 100,
   },
   refSubtitle: {
     fontSize: 13,
@@ -328,4 +335,4 @@ const styles = StyleSheet.create({
     width: "100%",
     marginTop: 8,
   },
-})
+});

@@ -90,6 +90,7 @@ export default function HomeScreen() {
 
             <TextInput
               style={[styles.searchInput, { color: textColor }]}
+              autoCorrect={false}
               placeholder="Search verses..."
               placeholderTextColor={mutedText}
               value={search}
@@ -166,6 +167,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    marginTop: 10,
     marginBottom: 14,
   },
 

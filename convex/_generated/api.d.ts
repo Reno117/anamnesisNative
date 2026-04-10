@@ -11,6 +11,7 @@
 import type * as auth from "../auth.js";
 import type * as collectionVerses from "../collectionVerses.js";
 import type * as collections from "../collections.js";
+import type * as groups from "../groups.js";
 import type * as http from "../http.js";
 import type * as verses from "../verses.js";
 
@@ -24,6 +25,7 @@ declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   collectionVerses: typeof collectionVerses;
   collections: typeof collections;
+  groups: typeof groups;
   http: typeof http;
   verses: typeof verses;
 }>;

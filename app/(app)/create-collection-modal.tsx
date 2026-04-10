@@ -1,47 +1,48 @@
 import { useState } from "react"
 import {
-  View, Text, TextInput, TouchableOpacity,
-  StyleSheet, ActivityIndicator, Platform, useColorScheme,
+  View,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  ActivityIndicator,
+  Platform,
+  Alert,
 } from "react-native"
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { useMutation } from "convex/react"
 import { api } from "@/convex/_generated/api"
 import { authClient } from "@/lib/auth-client"
 import { Id } from "@/convex/_generated/dataModel"
-import { ThemedText } from "@/components/themed-text"
 import { SafeAreaView } from "react-native-safe-area-context"
-import { useThemeColor } from "@/hooks/use-theme-color"
+import { ThemedView } from "@/components/themed-view"
+import { ThemedText } from "@/components/themed-text"
+import { ThemedButton } from "@/components/themed-button"
+
+type CollectionType = "personal" | "shared"
 
 export default function CreateCollectionModal() {
   const router = useRouter()
   const { data: session } = authClient.useSession()
   const userId = session?.user?.id
-  const scheme = useColorScheme()
-
-  // ── Theme tokens ──────────────────────────────────────────────
-  const bg          = useThemeColor({}, "background")
-  const textPrimary = useThemeColor({}, "text")
-  const textSub     = useThemeColor({ light: "#555555", dark: "#8e8e93" }, "tabIconDefault")
-  const inputBg     = useThemeColor({ light: "#fafafa",  dark: "#1c1c1e" }, "background")
-  const inputBorder = useThemeColor({ light: "#e8e8e8",  dark: "#3a3a3c" }, "border")
-  const footerBorder= useThemeColor({ light: "#f0f0f0",  dark: "#2c2c2e" }, "border")
-  const cancelBorder= useThemeColor({ light: "#e0e0e0",  dark: "#3a3a3c" }, "border")
-  const placeholder = scheme === "dark" ? "#636366" : "#aaaaaa"
-  const saveBg      = useThemeColor({ light: "#1a1a1a",  dark: "#f2f2f7" }, "text")
-  const saveText    = useThemeColor({ light: "#ffffff",  dark: "#1a1a1a" }, "background")
 
   const { collectionId, name: existingName, description: existingDescription } =
-    useLocalSearchParams<{ collectionId?: string; name?: string; description?: string }>()
+    useLocalSearchParams<{
+      collectionId?: string
+      name?: string
+      description?: string
+    }>()
 
   const isEditing = !!collectionId
 
   const [name, setName] = useState(existingName ?? "")
   const [description, setDescription] = useState(existingDescription ?? "")
+  const [type, setType] = useState<CollectionType>("personal")
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState("")
 
   const createCollection = useMutation(api.collections.createCollection)
   const updateCollection = useMutation(api.collections.updateCollection)
+  const createGroup = useMutation(api.groups.createGroup)
 
   async function handleSave() {
     if (!name.trim()) {
@@ -55,17 +56,34 @@ export default function CreateCollectionModal() {
       if (isEditing) {
         await updateCollection({
           collectionId: collectionId as Id<"collections">,
+          userId,
           name,
           description: description || undefined,
         })
-      } else {
+        router.dismiss()
+      } else if (type === "personal") {
         await createCollection({
           userId,
           name,
           description: description || undefined,
         })
+        router.dismiss()
+      } else {
+        // Shared — create group first, then collection owned by group
+        const { groupId, inviteCode } = await createGroup({ userId, name })
+        await createCollection({
+          userId,
+          name,
+          description: description || undefined,
+          groupId, // pass groupId so collection is owned by group
+        })
+        // Navigate to invite screen so admin can share the code immediately
+        router.dismiss()
+        router.push({
+          pathname: "/(app)/(protected)/invite-screen",
+          params: { groupId, inviteCode, collectionName: name },
+        })
       }
-      router.dismiss()
     } catch {
       setError("Failed to save. Please try again.")
     } finally {
@@ -74,90 +92,131 @@ export default function CreateCollectionModal() {
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: bg }]} edges={["top"]}>
-      <View style={styles.scroll}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={[styles.backBtnText, { color: textPrimary }]}>‹ Back</Text>
-        </TouchableOpacity>
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+        <View style={styles.scroll}>
+          <ThemedText type="title" style={styles.title}>
+            {isEditing ? "Edit Collection" : "New Collection"}
+          </ThemedText>
 
-        <ThemedText type="defaultSemiBold" style={[styles.label, { color: textSub }]}>
-          Collection Name *
-        </ThemedText>
-        <TextInput
-          style={[styles.input, { borderColor: inputBorder, backgroundColor: inputBg, color: textPrimary }]}
-          placeholder="e.g. Romans 8, Anxiety verses, Small Group S25..."
-          placeholderTextColor={placeholder}
-          value={name}
-          onChangeText={setName}
-          autoFocus
-          maxLength={60}
-        />
+          <ThemedText type="defaultSemiBold" style={styles.label}>
+            Name *
+          </ThemedText>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. Romans 8, Anxiety verses, Small Group S25..."
+            placeholderTextColor="#aaa"
+            value={name}
+            onChangeText={setName}
+            autoFocus
+            maxLength={60}
+          />
 
-        <ThemedText type="defaultSemiBold" style={[styles.label, { color: textSub }]}>
-          Description
-        </ThemedText>
-        <TextInput
-          style={[styles.input, styles.textArea, { borderColor: inputBorder, backgroundColor: inputBg, color: textPrimary }]}
-          placeholder="Optional — what is this collection for?"
-          placeholderTextColor={placeholder}
-          value={description}
-          onChangeText={setDescription}
-          multiline
-          textAlignVertical="top"
-          maxLength={200}
-        />
+          <ThemedText type="defaultSemiBold" style={styles.label}>
+            Description
+          </ThemedText>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Optional — what is this collection for?"
+            placeholderTextColor="#aaa"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            textAlignVertical="top"
+            maxLength={200}
+          />
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-      </View>
+          {/* Type toggle — only show when creating */}
+          {!isEditing && (
+            <View style={styles.typeSection}>
+              <ThemedText type="defaultSemiBold" style={styles.label}>
+                Type
+              </ThemedText>
+              <View style={styles.typeRow}>
+                <TouchableOpacity
+                  style={[styles.typeBtn, type === "personal" && styles.typeBtnActive]}
+                  onPress={() => setType("personal")}
+                >
+                  <ThemedText
+                    style={[styles.typeBtnText, type === "personal" && styles.typeBtnTextActive]}
+                  >
+                    🔒 Personal
+                  </ThemedText>
+                  <ThemedText
+                    style={[styles.typeBtnSub, type === "personal" && styles.typeBtnSubActive]}
+                  >
+                    Only you
+                  </ThemedText>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.typeBtn, type === "shared" && styles.typeBtnActive]}
+                  onPress={() => setType("shared")}
+                >
+                  <ThemedText
+                    style={[styles.typeBtnText, type === "shared" && styles.typeBtnTextActive]}
+                  >
+                    👥 Shared
+                  </ThemedText>
+                  <ThemedText
+                    style={[styles.typeBtnSub, type === "shared" && styles.typeBtnSubActive]}
+                  >
+                    Invite others
+                  </ThemedText>
+                </TouchableOpacity>
+              </View>
+              {type === "shared" && (
+                <ThemedText style={styles.sharedHint}>
+                  An invite code will be generated after creation.
+                </ThemedText>
+              )}
+            </View>
+          )}
 
-      <View style={[styles.footer, { borderTopColor: footerBorder }]}>
-        <TouchableOpacity
-          style={[styles.cancelBtn, { borderColor: cancelBorder }]}
-          onPress={() => router.dismiss()}
-        >
-          <Text style={[styles.cancelBtnText, { color: textSub }]}>Cancel</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.saveBtn, { backgroundColor: saveBg }, saving && styles.btnDisabled]}
-          onPress={handleSave}
-          disabled={saving}
-        >
-          {saving
-            ? <ActivityIndicator color={saveText} />
-            : <Text style={[styles.saveBtnText, { color: saveText }]}>{isEditing ? "Save Changes" : "Create"}</Text>
-          }
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+          {error ? <ThemedText style={styles.errorText}>{error}</ThemedText> : null}
+        </View>
+
+        <View style={styles.footer}>
+          <ThemedButton variant="outline" onPress={() => router.dismiss()}>
+            Cancel
+          </ThemedButton>
+          <ThemedButton onPress={handleSave} disabled={saving}>
+            {saving ? <ActivityIndicator color="#fff" /> : isEditing ? "Save" : type === "shared" ? "Create & Invite" : "Create"}
+          </ThemedButton>
+        </View>
+      </SafeAreaView>
+    </ThemedView>
   )
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  safeArea: { flex: 1 },
   scroll: { flex: 1, padding: 24 },
-  label: { fontSize: 13, marginBottom: 6 },
+  title: { marginBottom: 24 },
+  label: { fontSize: 13, marginBottom: 6, color: "#555" },
   input: {
-    borderWidth: 1, borderRadius: 10,
+    borderWidth: 1, borderColor: "#e8e8e8", borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, marginBottom: 20,
+    fontSize: 15, color: "#1a1a1a", backgroundColor: "#fafafa", marginBottom: 20,
   },
   textArea: { height: 100, paddingTop: 12 },
-  errorText: { color: "#c0392b", fontSize: 13 },
+  typeSection: { marginBottom: 8 },
+  typeRow: { flexDirection: "row", gap: 12, marginBottom: 10 },
+  typeBtn: {
+    flex: 1, borderWidth: 1, borderColor: "#e8e8e8",
+    borderRadius: 12, padding: 14, alignItems: "center",
+    backgroundColor: "#fafafa", gap: 4,
+  },
+  typeBtnActive: { borderColor: "#1a1a1a", backgroundColor: "#f5f5f5" },
+  typeBtnText: { fontSize: 15, fontWeight: "600", color: "#555" },
+  typeBtnTextActive: { color: "#1a1a1a" },
+  typeBtnSub: { fontSize: 12, color: "#aaa" },
+  typeBtnSubActive: { color: "#666" },
+  sharedHint: { fontSize: 13, color: "#aaa", marginTop: 4 },
+  errorText: { color: "#c0392b", fontSize: 13, marginTop: 4 },
   footer: {
     flexDirection: "row", gap: 12, padding: 24,
     paddingBottom: Platform.OS === "ios" ? 36 : 24,
-    borderTopWidth: 1,
+    borderTopWidth: 1, borderTopColor: "#f0f0f0",
   },
-  cancelBtn: {
-    flex: 1, paddingVertical: 14, borderRadius: 12,
-    borderWidth: 1, alignItems: "center",
-  },
-  cancelBtnText: { fontSize: 15, fontWeight: "600" },
-  saveBtn: {
-    flex: 2, paddingVertical: 14, borderRadius: 12, alignItems: "center",
-  },
-  backBtn: { padding: 4, marginBottom: 28 },
-  backBtnText: { fontSize: 17, fontWeight: "500" },
-  btnDisabled: { opacity: 0.4 },
-  saveBtnText: { fontSize: 15, fontWeight: "600" },
 })

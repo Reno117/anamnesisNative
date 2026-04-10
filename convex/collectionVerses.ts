@@ -60,7 +60,6 @@ export const addVerseToCollection = mutation({
     })
   },
 })
-
 export const removeVerseFromCollection = mutation({
   args: {
     collectionId: v.id("collections"),
@@ -68,15 +67,31 @@ export const removeVerseFromCollection = mutation({
     userId: v.string(),
   },
   handler: async (ctx, { collectionId, verseId, userId }) => {
-    const entries = await ctx.db
+    const col = await ctx.db.get(collectionId)
+    if (!col) return
+
+    const entry = await ctx.db
       .query("collectionVerses")
       .withIndex("by_collection", (q) => q.eq("collectionId", collectionId))
-      .collect()
-    const entry = entries.find((e) => e.verseId === verseId)
+      .filter((q) => q.eq(q.field("verseId"), verseId))
+      .first()
+
     if (!entry) return
 
-    // Only the person who added it can remove it (admin check comes later for groups)
-    if (entry.addedBy !== userId) return
+    // Check permission: added by user OR group admin
+    const isAdder = entry.addedBy === userId
+    let isAdmin = false
+
+    if (col.ownerType === "group") {
+      const membership = await ctx.db
+        .query("groupMembers")
+        .withIndex("by_group", (q) => q.eq("groupId", col.ownerId as any))
+        .filter((q) => q.eq(q.field("userId"), userId))
+        .first()
+      isAdmin = membership?.role === "admin"
+    }
+
+    if (!isAdder && !isAdmin) return
 
     await ctx.db.delete(entry._id)
   },

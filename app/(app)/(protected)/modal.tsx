@@ -5,7 +5,7 @@ import { api } from "@/convex/_generated/api";
 import { Id } from "@/convex/_generated/dataModel";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { authClient } from "@/lib/auth-client";
-import { useMutation, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { Link, useLocalSearchParams, useRouter } from "expo-router";
 import { useRef, useState } from "react";
 import {
@@ -19,11 +19,9 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const TRANSLATIONS = ["ESV", "NIV", "KJV", "NASB", "NLT", "CSB"];
-
-const BIBLE_IDS: Record<string, string> = {
-  ESV: "06125adad2d5898a-01",
-};
+// Must match the union in getVerseText action
+const TRANSLATIONS = ["ESV", "NIV", "CSB", "NASB", "KJV", "BSB"] as const;
+type Translation = (typeof TRANSLATIONS)[number];
 
 const BOOK_ID_MAP: Record<string, string> = {
   Genesis: "GEN",
@@ -110,6 +108,8 @@ export default function AddVerseModal() {
   const userId = session?.user?.id;
 
   const addVerse = useMutation(api.verses.addVerse);
+  // useAction returns a callable directly — don't pass api.verses.getVerseText again when calling
+  const getVerseText = useAction(api.verses.getVerseText);
 
   const allCollections = useQuery(
     api.collections.listCollections,
@@ -119,10 +119,8 @@ export default function AddVerseModal() {
     api.collectionVerses.addVerseToCollection,
   );
 
-  // Update handleSave to also assign collections after inserting
   const [selectedCollections, setSelectedCollections] = useState<string[]>([]);
-
-  const [translation, setTranslation] = useState("ESV");
+  const [translation, setTranslation] = useState<Translation>("ESV");
   const [chapter, setChapter] = useState("");
   const [verseStart, setVerseStart] = useState("");
   const [verseEnd, setVerseEnd] = useState("");
@@ -133,6 +131,11 @@ export default function AddVerseModal() {
   const [fetchError, setFetchError] = useState("");
   const [saveError, setSaveError] = useState("");
 
+  // canFetch: all supported translations can use the server action
+  const FETCHABLE_TRANSLATIONS = new Set<Translation>(["ESV", "NIV", "CSB", "NASB"]);
+  // Add to this array for the translations that can be fetched ^^.
+  const canFetch = FETCHABLE_TRANSLATIONS.has(translation);
+
   // Clear fetched text when book changes
   const prevBookRef = useRef(book);
   if (prevBookRef.current !== book) {
@@ -140,9 +143,6 @@ export default function AddVerseModal() {
     setText("");
     setFetchError("");
   }
-
-  const apiKey = process.env.EXPO_PUBLIC_BIBLE_API_KEY ?? "";
-  const canFetch = translation === "ESV";
 
   function toggleCollection(collectionId: string) {
     setSelectedCollections((prev) =>
@@ -161,27 +161,22 @@ export default function AddVerseModal() {
     setFetchError("");
     setText("");
     try {
-      const passage = verseEnd
-        ? `${book} ${chapter}:${verseStart}-${verseEnd}`
-        : `${book} ${chapter}:${verseStart}`;
+      // Call getVerseText directly with args — do NOT pass api.verses.getVerseText again
+      const result = await getVerseText({
+        book,
+        chapter: Number(chapter),
+        verseStart: Number(verseStart),
+        verseEnd: verseEnd ? Number(verseEnd) : undefined,
+        translation,
+      });
 
-      const res = await fetch(
-        `https://api.esv.org/v3/passage/text/?q=${encodeURIComponent(passage)}&include-headings=false&include-footnotes=false&include-verse-numbers=false&include-short-copyright=false&include-passage-references=false`,
-        {
-          headers: {
-            Authorization: `Token ${apiKey}`,
-          },
-        },
-      );
-      const data = await res.json();
-      const fetched = data?.passages?.[0]?.trim();
-      if (!fetched) {
-        setFetchError("Verse not found. Check the reference and try again.");
-      } else {
-        setText(fetched);
+      if (result.error) {
+        setFetchError(result.error);
+      } else if (result.text) {
+        setText(result.text);
       }
     } catch {
-      setFetchError("Fetch failed. Check your API key and connection.");
+      setFetchError("Fetch failed. Check your connection.");
     } finally {
       setFetching(false);
     }
@@ -209,7 +204,6 @@ export default function AddVerseModal() {
         text: text.trim(),
       });
 
-      // Add to any selected collections (beyond Uncategorized which is automatic)
       await Promise.all(
         selectedCollections.map((collectionId) =>
           addToCollection({
@@ -230,262 +224,283 @@ export default function AddVerseModal() {
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
-    <ThemedView style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Translation */}
-        <ThemedText type="defaultSemiBold" style={styles.label}>
-          Translation
-        </ThemedText>
+      <ThemedView style={styles.container}>
         <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.translationRow}
+          contentContainerStyle={styles.scroll}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          {TRANSLATIONS.map((t) => (
-            <TouchableOpacity
-              key={t}
-              onPress={() => setTranslation(t)}
-              style={[
-                styles.chip,
-                { backgroundColor: card, borderColor: muted },
-                translation === t && styles.chipActive,
-              ]}
-            >
-              <ThemedText
+          {/* Translation */}
+          <ThemedText type="defaultSemiBold" style={styles.label}>
+            Translation
+          </ThemedText>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.translationRow}
+          >
+            {TRANSLATIONS.map((t) => (
+              <TouchableOpacity
+                key={t}
+                onPress={() => setTranslation(t)}
                 style={[
-                  styles.chipText,
-                  translation === t && styles.chipTextActive,
+                  styles.chip,
+                  { backgroundColor: card, borderColor: muted },
+                  translation === t && styles.chipActive,
                 ]}
               >
-                {t}
-              </ThemedText>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+                <ThemedText
+                  style={[
+                    styles.chipText,
+                    translation === t && styles.chipTextActive,
+                  ]}
+                >
+                  {t}
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
 
-        {/* Book */}
-        <ThemedText type="defaultSemiBold" style={styles.label}>
-          Book
-        </ThemedText>
-        {Platform.OS === "web" ? (
-          <View style={styles.comboWrapper}>
-            <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: card, color: textColor, borderColor: muted },
-              ]}
-              value={book === "Genesis" && !bookParam ? "" : book}
-              onChangeText={(val) => router.setParams({ book: val })}
-              placeholder="Search book..."
-              placeholderTextColor={muted}
-              // @ts-ignore
-              list="books-list"
-            />
-            {/* @ts-ignore */}
-            <datalist id="books-list">
-              {BOOKS_OF_THE_BIBLE.map((b) => (
+          {/* Book */}
+          <ThemedText type="defaultSemiBold" style={styles.label}>
+            Book
+          </ThemedText>
+          {Platform.OS === "web" ? (
+            <View style={styles.comboWrapper}>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: card,
+                    color: textColor,
+                    borderColor: muted,
+                  },
+                ]}
+                value={book === "Genesis" && !bookParam ? "" : book}
+                onChangeText={(val) => router.setParams({ book: val })}
+                placeholder="Search book..."
+                placeholderTextColor={muted}
                 // @ts-ignore
-                <option key={b} value={b} />
-              ))}
-            </datalist>
-          </View>
-        ) : (
-          <TouchableOpacity
-            style={[
-              styles.bookBtn,
-              { backgroundColor: card, borderColor: muted },
-            ]}
-            onPress={() =>
-              router.push({
-                pathname: "/book-picker",
-                params: { current: book },
-              })
-            }
-          >
-            <ThemedText style={styles.bookBtnText}>{book}</ThemedText>
-            <ThemedText style={[styles.bookBtnChevron, { color: muted }]}>
-              ›
-            </ThemedText>
-          </TouchableOpacity>
-        )}
-
-        {/* Chapter / Verse */}
-        <View style={styles.row}>
-          <View style={styles.rowItem}>
-            <ThemedText type="defaultSemiBold" style={styles.label}>
-              Chapter
-            </ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: card, color: textColor, borderColor: muted },
-              ]}
-              placeholder="8"
-              placeholderTextColor={muted}
-              keyboardType="numeric"
-              value={chapter}
-              onChangeText={setChapter}
-            />
-          </View>
-          <View style={styles.rowItem}>
-            <ThemedText type="defaultSemiBold" style={styles.label}>
-              Verse
-            </ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: card, color: textColor, borderColor: muted },
-              ]}
-              placeholder="1"
-              placeholderTextColor={muted}
-              keyboardType="numeric"
-              value={verseStart}
-              onChangeText={setVerseStart}
-            />
-          </View>
-          <View style={styles.rowItem}>
-            <ThemedText type="defaultSemiBold" style={styles.label}>
-              To verse
-            </ThemedText>
-            <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: card, color: textColor, borderColor: muted },
-              ]}
-              placeholder="4"
-              placeholderTextColor={muted}
-              keyboardType="numeric"
-              value={verseEnd}
-              onChangeText={setVerseEnd}
-            />
-          </View>
-        </View>
-
-        {/* Fetch — ESV only */}
-        {canFetch && (
-          <>
+                list="books-list"
+              />
+              {/* @ts-ignore */}
+              <datalist id="books-list">
+                {BOOKS_OF_THE_BIBLE.map((b) => (
+                  // @ts-ignore
+                  <option key={b} value={b} />
+                ))}
+              </datalist>
+            </View>
+          ) : (
             <TouchableOpacity
               style={[
-                styles.fetchBtn,
-                { borderColor: textColor },
-                fetching && styles.btnDisabled,
+                styles.bookBtn,
+                { backgroundColor: card, borderColor: muted },
               ]}
-              onPress={handleFetch}
-              disabled={fetching}
+              onPress={() =>
+                router.push({
+                  pathname: "/book-picker",
+                  params: { current: book },
+                })
+              }
             >
-              {fetching ? (
-                <ActivityIndicator color={textColor} />
-              ) : (
-                <ThemedText style={styles.fetchBtnText}>Fetch Verse</ThemedText>
-              )}
-            </TouchableOpacity>
-            {fetchError ? (
-              <ThemedText style={styles.errorText}>{fetchError}</ThemedText>
-            ) : null}
-          </>
-        )}
-
-        {/* Verse text */}
-        <ThemedText
-          type="defaultSemiBold"
-          style={[styles.label, { marginTop: 20 }]}
-        >
-          Verse Text
-        </ThemedText>
-        <TextInput
-          style={[
-            styles.input,
-            styles.textArea,
-            { backgroundColor: card, color: textColor, borderColor: muted },
-          ]}
-          placeholder={
-            canFetch
-              ? "Tap 'Fetch Verse' to auto-fill, or type manually."
-              : "Type or paste the verse text here."
-          }
-          placeholderTextColor={muted}
-          value={text}
-          onChangeText={setText}
-          multiline
-          textAlignVertical="top"
-        />
-
-        {/* Collections */}
-        {allCollections &&
-          allCollections.filter((c) => c.name !== "Uncategorized").length >
-            0 && (
-            <View style={{ marginTop: 8, marginBottom: 12 }}>
-              <ThemedText type="defaultSemiBold" style={styles.label}>
-                Add to Collection
+              <ThemedText style={styles.bookBtnText}>{book}</ThemedText>
+              <ThemedText style={[styles.bookBtnChevron, { color: muted }]}>
+                ›
               </ThemedText>
-              <View style={{ gap: 8 }}>
-                {allCollections
-                  .filter((c) => c.name !== "Uncategorized")
-                  .map((col) => {
-                    const isSelected = selectedCollections.includes(col._id);
-                    return (
-                      <TouchableOpacity
-                        key={col._id}
-                        style={[
-                          styles.collectionRow,
-                          { backgroundColor: card, borderColor: muted },
-                          isSelected && {
-                            backgroundColor: muted,
-                            borderColor: textColor,
-                          },
-                        ]}
-                        onPress={() => toggleCollection(col._id)}
-                      >
-                        <ThemedText
-                          style={[
-                            styles.collectionRowText,
-                            isSelected && styles.collectionRowTextActive,
-                          ]}
-                        >
-                          {col.name}
-                        </ThemedText>
-                        <ThemedText
-                          style={[styles.collectionRowCheck, { color: muted }]}
-                        >
-                          {isSelected ? "✓" : "+"}
-                        </ThemedText>
-                      </TouchableOpacity>
-                    );
-                  })}
-              </View>
-            </View>
+            </TouchableOpacity>
           )}
 
-        {saveError ? (
-          <ThemedText style={styles.errorText}>{saveError}</ThemedText>
-        ) : null}
-        <View style={{ height: 40 }} />
-      </ScrollView>
+          {/* Chapter / Verse */}
+          <View style={styles.row}>
+            <View style={styles.rowItem}>
+              <ThemedText type="defaultSemiBold" style={styles.label}>
+                Chapter
+              </ThemedText>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: card,
+                    color: textColor,
+                    borderColor: muted,
+                  },
+                ]}
+                placeholder="8"
+                placeholderTextColor={muted}
+                keyboardType="numeric"
+                value={chapter}
+                onChangeText={setChapter}
+              />
+            </View>
+            <View style={styles.rowItem}>
+              <ThemedText type="defaultSemiBold" style={styles.label}>
+                Verse
+              </ThemedText>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: card,
+                    color: textColor,
+                    borderColor: muted,
+                  },
+                ]}
+                placeholder="1"
+                placeholderTextColor={muted}
+                keyboardType="numeric"
+                value={verseStart}
+                onChangeText={setVerseStart}
+              />
+            </View>
+            <View style={styles.rowItem}>
+              <ThemedText type="defaultSemiBold" style={styles.label}>
+                To verse
+              </ThemedText>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: card,
+                    color: textColor,
+                    borderColor: muted,
+                  },
+                ]}
+                placeholder="4"
+                placeholderTextColor={muted}
+                keyboardType="numeric"
+                value={verseEnd}
+                onChangeText={setVerseEnd}
+              />
+            </View>
+          </View>
 
-      <View
-        style={{
-          borderTopColor: muted,
-          flexDirection: "row",
-          gap: 12,
-          padding: 24,
-          paddingBottom: Platform.OS === "ios" ? 36 : 24,
-          borderTopWidth: 1,
-        }}
-      >
-        <Link href="/" dismissTo asChild>
-          <ThemedButton variant="outline">Cancel</ThemedButton>
-        </Link>
-        <ThemedButton onPress={handleSave} disabled={saving}>
-          Save Verse
-        </ThemedButton>
-      </View>
-    </ThemedView>
-  </SafeAreaView>
-  )
+          {/* Fetch button */}
+          {canFetch && (
+            <>
+              <TouchableOpacity
+                style={[
+                  styles.fetchBtn,
+                  { borderColor: textColor },
+                  fetching && styles.btnDisabled,
+                ]}
+                onPress={handleFetch}
+                disabled={fetching}
+              >
+                {fetching ? (
+                  <ActivityIndicator color={textColor} />
+                ) : (
+                  <ThemedText style={styles.fetchBtnText}>
+                    Fetch Verse
+                  </ThemedText>
+                )}
+              </TouchableOpacity>
+              {fetchError ? (
+                <ThemedText style={styles.errorText}>{fetchError}</ThemedText>
+              ) : null}
+            </>
+          )}
+
+          {/* Verse text */}
+          <ThemedText
+            type="defaultSemiBold"
+            style={[styles.label, { marginTop: 20 }]}
+          >
+            Verse Text
+          </ThemedText>
+          <TextInput
+            style={[
+              styles.input,
+              styles.textArea,
+              { backgroundColor: card, color: textColor, borderColor: muted },
+            ]}
+            placeholder={
+              canFetch
+                ? "Tap 'Fetch Verse' to auto-fill, or type manually."
+                : "Type or paste the verse text here."
+            }
+            placeholderTextColor={muted}
+            value={text}
+            onChangeText={setText}
+            multiline
+            textAlignVertical="top"
+          />
+
+          {/* Collections */}
+          {allCollections &&
+            allCollections.filter((c) => c.name !== "Uncategorized").length >
+              0 && (
+              <View style={{ marginTop: 8, marginBottom: 12 }}>
+                <ThemedText type="defaultSemiBold" style={styles.label}>
+                  Add to Collection
+                </ThemedText>
+                <View style={{ gap: 8 }}>
+                  {allCollections
+                    .filter((c) => c.name !== "Uncategorized")
+                    .map((col) => {
+                      const isSelected = selectedCollections.includes(col._id);
+                      return (
+                        <TouchableOpacity
+                          key={col._id}
+                          style={[
+                            styles.collectionRow,
+                            { backgroundColor: card, borderColor: muted },
+                            isSelected && {
+                              backgroundColor: muted,
+                              borderColor: textColor,
+                            },
+                          ]}
+                          onPress={() => toggleCollection(col._id)}
+                        >
+                          <ThemedText
+                            style={[
+                              styles.collectionRowText,
+                              isSelected && styles.collectionRowTextActive,
+                            ]}
+                          >
+                            {col.name}
+                          </ThemedText>
+                          <ThemedText
+                            style={[
+                              styles.collectionRowCheck,
+                              { color: muted },
+                            ]}
+                          >
+                            {isSelected ? "✓" : "+"}
+                          </ThemedText>
+                        </TouchableOpacity>
+                      );
+                    })}
+                </View>
+              </View>
+            )}
+
+          {saveError ? (
+            <ThemedText style={styles.errorText}>{saveError}</ThemedText>
+          ) : null}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+
+        <View
+          style={{
+            borderTopColor: muted,
+            flexDirection: "row",
+            gap: 12,
+            padding: 24,
+            paddingBottom: Platform.OS === "ios" ? 36 : 24,
+            borderTopWidth: 1,
+          }}
+        >
+          <Link href="/" dismissTo asChild>
+            <ThemedButton variant="outline">Cancel</ThemedButton>
+          </Link>
+          <ThemedButton onPress={handleSave} disabled={saving}>
+            Save Verse
+          </ThemedButton>
+        </View>
+      </ThemedView>
+    </SafeAreaView>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -502,7 +517,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
     backgroundColor: "#fafafa",
   },
-  chipActive: { borderColor: "#1a1a1a" },
+  chipActive: { borderColor: "#90EE90" },
   chipText: { fontSize: 13, fontWeight: "500" },
   chipTextActive: {},
   bookBtn: {
@@ -569,9 +584,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   saveBtn: {
-    flex: 1, // ✅ changed from 2 → 1
+    flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: "center",

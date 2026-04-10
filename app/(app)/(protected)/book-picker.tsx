@@ -1,5 +1,6 @@
 import { useRouter, useLocalSearchParams } from "expo-router"
 import { TouchableOpacity, View, Text, StyleSheet, FlatList } from "react-native"
+import { SafeAreaView } from "react-native-safe-area-context"
 
 const BOOKS = [
   "Genesis", "Exodus", "Leviticus", "Numbers", "Deuteronomy",
@@ -37,6 +38,7 @@ export default function BookPickerModal() {
   }
 
   return (
+    <SafeAreaView style={{ flex: 1 }} edges={["top"]}>
     <View style={styles.container}>
       <FlatList
         data={BOOKS}
@@ -64,6 +66,7 @@ export default function BookPickerModal() {
         }}
       />
     </View>
+</SafeAreaView>
   )
 }
 
