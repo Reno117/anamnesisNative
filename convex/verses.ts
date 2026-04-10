@@ -192,8 +192,8 @@ export const getVerseText = action({
         case "NASB": {
           const bibleIds: Record<string, string> = {
             NIV: "78a9f6124f344018-01",
-            CSB: "a556c6ee0d4c1c95-01",
-            NASB: "a761ca71b4ef4f7c-01",
+            CSB: "a556c5305ee15c3f-01",
+            NASB: "a761ca71e0b3ddcf-01",
           };
           const bibleId = bibleIds[args.translation];
           const passageId = args.verseEnd
@@ -201,7 +201,7 @@ export const getVerseText = action({
             : `${bookCode}.${args.chapter}.${args.verseStart}`;
 
           const res = await fetch(
-            `https://api.scripture.api.bible/v1/bibles/${bibleId}/passages/${passageId}?content-type=text&include-verse-numbers=false`,
+            `https://rest.api.bible/v1/bibles/${bibleId}/passages/${passageId}?content-type=text&include-verse-numbers=false`,
             { headers: { "api-key": bibleApiKey } },
           );
           const data = await res.json();
