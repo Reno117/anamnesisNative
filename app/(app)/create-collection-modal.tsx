@@ -98,10 +98,10 @@ export default function CreateCollectionModal() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"} // try "height" for Android too
-          style={{ flex: 1 }}
-        >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : "height"} // try "height" for Android too
+        style={{ flex: 1 }}
+      >
           <View style={styles.scroll}>
             <ThemedText type="title" style={styles.title}>
               {isEditing ? "Edit Collection" : "New Collection"}
@@ -120,7 +120,7 @@ export default function CreateCollectionModal() {
               maxLength={60}
             />
 
-            <ThemedText type="defaultSemiBold" style={styles.label}>
+            {/* <ThemedText type="defaultSemiBold" style={styles.label}>
               Description
             </ThemedText>
             <TextInput
@@ -132,7 +132,7 @@ export default function CreateCollectionModal() {
               multiline
               textAlignVertical="top"
               maxLength={200}
-            />
+            /> */}
 
             {/* Type toggle — only show when creating */}
             {!isEditing && (
@@ -219,7 +219,7 @@ export default function CreateCollectionModal() {
               )}
             </ThemedButton>
           </View>
-        </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
   );

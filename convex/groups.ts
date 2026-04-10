@@ -1,5 +1,6 @@
 import { mutation, query } from "./_generated/server"
 import { v } from "convex/values"
+import { authComponent } from "./auth"
 
 function generateInviteCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no confusable chars
@@ -178,7 +179,27 @@ export const getGroupMembers = query({
       .query("groupMembers")
       .withIndex("by_group", (q) => q.eq("groupId", groupId))
       .collect()
-    return members
+
+    const withNames = await Promise.all(
+      members.map(async (member) => {
+        try {
+          const user = await authComponent.getAnyUserById(ctx, member.userId )
+          return {
+            ...member,
+            name: user?.name ?? user?.email ?? member.userId,
+            email: user?.email ?? null,
+          }
+        } catch {
+          return {
+            ...member,
+            name: member.userId,
+            email: null,
+          }
+        }
+      })
+    )
+
+    return withNames
   },
 })
 

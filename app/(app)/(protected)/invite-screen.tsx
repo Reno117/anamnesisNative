@@ -134,7 +134,7 @@ export default function InviteScreen() {
           {members?.map((member) => (
             <View key={member._id} style={styles.memberRow}>
               <View>
-                <ThemedText style={styles.memberId}>{member.userId}</ThemedText>
+                <ThemedText style={styles.memberId}>{member.name}</ThemedText>
                 <ThemedText style={styles.memberRole}>
                   {member.role === "admin" ? "Admin" : "Member"}
                 </ThemedText>

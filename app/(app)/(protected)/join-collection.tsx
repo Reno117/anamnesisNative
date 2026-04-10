@@ -4,6 +4,8 @@ import {
   StyleSheet,
   TextInput,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context"
 import { useRouter } from "expo-router"
@@ -55,6 +57,10 @@ export default function JoinCollection() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"} // try "height" for Android too
+          style={{ flex: 1 }}
+        >
         <View style={styles.content}>
           <ThemedText type="title" style={styles.title}>Join a Collection</ThemedText>
           <ThemedText style={styles.subtitle}>
@@ -88,6 +94,7 @@ export default function JoinCollection() {
             </ThemedButton>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
   )

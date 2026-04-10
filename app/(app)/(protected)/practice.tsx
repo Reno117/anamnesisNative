@@ -60,16 +60,18 @@ export default function PracticeModal() {
     []
   )
 
-  function goToMode(mode: "first-letter" | "full-verse") {
-    bottomSheetRef.current?.dismiss()
-    router.replace({
+function goToMode(mode: "first-letter" | "full-verse") {
+  bottomSheetRef.current?.dismiss()
+  setTimeout(() => {
+    router.push({
       pathname:
         mode === "first-letter"
           ? "/(app)/(protected)/practice-first-letter"
           : "/(app)/(protected)/practice-full-verse",
       params: { verseId },
     })
-  }
+  }, 100)
+}
 
   return (
     <BottomSheetModalProvider>
