@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Platform,
   Image,
   ActivityIndicator,
   Alert,
@@ -73,25 +74,31 @@ export default function ProfileScreen() {
     setIsEditing(false);
   };
 
-  const handleSignOut = () => {
-    Alert.alert("Sign out", "Are you sure you want to sign out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Sign out",
-        style: "destructive",
-        onPress: async () => {
-          setIsSigningOut(true);
-          try {
-            await authClient.signOut();
-          } catch (err: any) {
-            Alert.alert("Error", err.message ?? "Failed to sign out.");
-          } finally {
-            setIsSigningOut(false);
-          }
-        },
-      },
-    ]);
-  };
+const handleSignOut = async () => {
+  const confirmed = Platform.OS === "web"
+    ? window.confirm("Are you sure you want to sign out?")
+    : await new Promise<boolean>((resolve) => {
+        Alert.alert("Sign out", "Are you sure you want to sign out?", [
+          { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
+          { text: "Sign out", style: "destructive", onPress: () => resolve(true) },
+        ])
+      })
+
+  if (!confirmed) return
+
+  setIsSigningOut(true)
+  try {
+    await authClient.signOut()
+  } catch (err: any) {
+    if (Platform.OS === "web") {
+      window.alert(err.message ?? "Failed to sign out.")
+    } else {
+      Alert.alert("Error", err.message ?? "Failed to sign out.")
+    }
+  } finally {
+    setIsSigningOut(false)
+  }
+}
 
   if (isPending) {
     return (
