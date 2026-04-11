@@ -19,7 +19,7 @@ export const createAuth = (ctx: GenericCtx<DataModel>) => {
     baseURL: siteUrl,
     trustedOrigins: [
         siteUrl, 
-        "your-scheme://"
+        "exp://"
     ], 
     database: authComponent.adapter(ctx),
     // baseURL: process.env.EXPO_PUBLIC_CONVEX_SITE_URL,

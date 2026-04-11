@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from "react";
+import { ThemedText } from "@/components/themed-text";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { authClient } from "@/lib/auth-client";
+import React, { useEffect, useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  Platform,
+  ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Platform,
-  Image,
-  ActivityIndicator,
-  Alert,
+  View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { authClient } from "@/lib/auth-client";
-import { useThemeColor } from "@/hooks/use-theme-color";
-import { ThemedText } from "@/components/themed-text";
 
 export default function ProfileScreen() {
   const { data: session, isPending } = authClient.useSession();
@@ -35,17 +35,32 @@ export default function ProfileScreen() {
   }, [session]);
 
   // ── Theme-aware colors ────────────────────────────────────────────────────
-  const bg        = useThemeColor({}, "background");
+  const bg = useThemeColor({}, "background");
   const textColor = useThemeColor({}, "text");
-  const mutedText = useThemeColor({ light: "#999999", dark: "#636366" }, "tabIconDefault");
-  const faintText = useThemeColor({ light: "#aaaaaa", dark: "#48484a" }, "tabIconDefault");
-  const surface   = useThemeColor({ light: "#ffffff", dark: "#1c1c1e" }, "background");
-  const inputBg   = useThemeColor({ light: "#f5f5f5", dark: "#2c2c2e" }, "background");
-  const border    = useThemeColor({ light: "#ece9e3", dark: "#2c2c2e" }, "border");
-  const dangerBg  = useThemeColor({ light: "#FEE2E2", dark: "#3b1219" }, "background");
-  const stripBg   = useThemeColor({ light: "#1a1a1a", dark: "#0a0a0a" }, "text");
+  const mutedText = useThemeColor(
+    { light: "#999999", dark: "#636366" },
+    "tabIconDefault",
+  );
+  const faintText = useThemeColor(
+    { light: "#aaaaaa", dark: "#48484a" },
+    "tabIconDefault",
+  );
+  const surface = useThemeColor(
+    { light: "#ffffff", dark: "#1c1c1e" },
+    "background",
+  );
+  const inputBg = useThemeColor(
+    { light: "#f5f5f5", dark: "#2c2c2e" },
+    "background",
+  );
+  const border = useThemeColor({ light: "#ece9e3", dark: "#2c2c2e" }, "border");
+  const dangerBg = useThemeColor(
+    { light: "#FEE2E2", dark: "#3b1219" },
+    "background",
+  );
+  const stripBg = useThemeColor({ light: "#1a1a1a", dark: "#0a0a0a" }, "text");
   const dangerText = "#DC2626";
-  const accentBg   = "#1a1a1a";
+  const accentBg = "#1a1a1a";
   const accentText = "#ffffff";
   // ─────────────────────────────────────────────────────────────────────────
 
@@ -74,31 +89,79 @@ export default function ProfileScreen() {
     setIsEditing(false);
   };
 
-const handleSignOut = async () => {
-  const confirmed = Platform.OS === "web"
-    ? window.confirm("Are you sure you want to sign out?")
-    : await new Promise<boolean>((resolve) => {
-        Alert.alert("Sign out", "Are you sure you want to sign out?", [
-          { text: "Cancel", style: "cancel", onPress: () => resolve(false) },
-          { text: "Sign out", style: "destructive", onPress: () => resolve(true) },
-        ])
-      })
+  const handleSignOut = async () => {
+    const confirmed =
+      Platform.OS === "web"
+        ? window.confirm("Are you sure you want to sign out?")
+        : await new Promise<boolean>((resolve) => {
+            Alert.alert("Sign out", "Are you sure you want to sign out?", [
+              {
+                text: "Cancel",
+                style: "cancel",
+                onPress: () => resolve(false),
+              },
+              {
+                text: "Sign out",
+                style: "destructive",
+                onPress: () => resolve(true),
+              },
+            ]);
+          });
 
-  if (!confirmed) return
+    if (!confirmed) return;
 
-  setIsSigningOut(true)
-  try {
-    await authClient.signOut()
-  } catch (err: any) {
-    if (Platform.OS === "web") {
-      window.alert(err.message ?? "Failed to sign out.")
-    } else {
-      Alert.alert("Error", err.message ?? "Failed to sign out.")
+    setIsSigningOut(true);
+    try {
+      await authClient.signOut();
+    } catch (err: any) {
+      if (Platform.OS === "web") {
+        window.alert(err.message ?? "Failed to sign out.");
+      } else {
+        Alert.alert("Error", err.message ?? "Failed to sign out.");
+      }
+    } finally {
+      setIsSigningOut(false);
     }
-  } finally {
-    setIsSigningOut(false)
-  }
-}
+  };
+
+  const handleDeleteAccount = async () => {
+    const confirmed =
+      Platform.OS === "web"
+        ? window.confirm("Are you sure you want to delete the account")
+        : await new Promise<boolean>((resolve) => {
+            Alert.alert(
+              "Delete account",
+              "Are you sure you want to delete the account",
+              [
+                {
+                  text: "Cancel",
+                  style: "cancel",
+                  onPress: () => resolve(false),
+                },
+                {
+                  text: "Delete Account",
+                  style: "destructive",
+                  onPress: () => resolve(true),
+                },
+              ],
+            );
+          });
+
+    if (!confirmed) return;
+
+    setIsSigningOut(true);
+    try {
+      await authClient.signOut();
+    } catch (err: any) {
+      if (Platform.OS === "web") {
+        window.alert(err.message ?? "Failed to sign out.");
+      } else {
+        Alert.alert("Error", err.message ?? "Failed to sign out.");
+      }
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
 
   if (isPending) {
     return (
@@ -111,13 +174,18 @@ const handleSignOut = async () => {
   if (!session) {
     return (
       <SafeAreaView style={[styles.centered, { backgroundColor: bg }]}>
-        <ThemedText style={{ color: mutedText, fontSize: 16 }}>Not signed in.</ThemedText>
+        <ThemedText style={{ color: mutedText, fontSize: 16 }}>
+          Not signed in.
+        </ThemedText>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.flex, { backgroundColor: bg }]} edges={["top"]}>
+    <SafeAreaView
+      style={[styles.flex, { backgroundColor: bg }]}
+      edges={["top"]}
+    >
       <ScrollView
         contentContainerStyle={[styles.container, { backgroundColor: bg }]}
         showsVerticalScrollIndicator={false}
@@ -130,9 +198,18 @@ const handleSignOut = async () => {
         {/* Avatar */}
         <View style={[styles.avatarWrapper, { backgroundColor: bg }]}>
           {avatarUri ? (
-            <Image source={{ uri: avatarUri }} style={[styles.avatar, { borderColor: bg }]} />
+            <Image
+              source={{ uri: avatarUri }}
+              style={[styles.avatar, { borderColor: bg }]}
+            />
           ) : (
-            <View style={[styles.avatar, styles.avatarPlaceholder, { borderColor: bg }]}>
+            <View
+              style={[
+                styles.avatar,
+                styles.avatarPlaceholder,
+                { borderColor: bg },
+              ]}
+            >
               <Text style={styles.initials}>{initials}</Text>
             </View>
           )}
@@ -141,20 +218,40 @@ const handleSignOut = async () => {
         {/* Name / email display */}
         {!isEditing && (
           <View style={styles.nameBlock}>
-            <ThemedText style={styles.displayName}>{name || "No name set"}</ThemedText>
-            <ThemedText style={[styles.displayEmail, { color: mutedText }]}>{email}</ThemedText>
+            <ThemedText style={styles.displayName}>
+              {name || "No name set"}
+            </ThemedText>
+            <ThemedText style={[styles.displayEmail, { color: mutedText }]}>
+              {email}
+            </ThemedText>
           </View>
         )}
 
         {/* Card */}
-        <View style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: surface, borderColor: border },
+          ]}
+        >
           {isEditing ? (
             <>
-              <ThemedText style={[styles.cardTitle, { color: mutedText }]}>Edit Profile</ThemedText>
+              <ThemedText style={[styles.cardTitle, { color: mutedText }]}>
+                Edit Profile
+              </ThemedText>
 
-              <ThemedText style={[styles.label, { color: mutedText }]}>Name</ThemedText>
+              <ThemedText style={[styles.label, { color: mutedText }]}>
+                Name
+              </ThemedText>
               <TextInput
-                style={[styles.input, { backgroundColor: inputBg, borderColor: border, color: textColor }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: inputBg,
+                    borderColor: border,
+                    color: textColor,
+                  },
+                ]}
                 value={name}
                 onChangeText={setName}
                 placeholder="Your name"
@@ -162,9 +259,18 @@ const handleSignOut = async () => {
                 autoCapitalize="words"
               />
 
-              <ThemedText style={[styles.label, { color: mutedText }]}>Email</ThemedText>
+              <ThemedText style={[styles.label, { color: mutedText }]}>
+                Email
+              </ThemedText>
               <TextInput
-                style={[styles.input, { backgroundColor: inputBg, borderColor: border, color: faintText }]}
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: inputBg,
+                    borderColor: border,
+                    color: faintText,
+                  },
+                ]}
                 value={email}
                 editable={false}
               />
@@ -174,46 +280,86 @@ const handleSignOut = async () => {
 
               <View style={styles.rowButtons}>
                 <TouchableOpacity
-                  style={[styles.btn, { borderWidth: 1, borderColor: border, backgroundColor: "transparent" }]}
+                  style={[
+                    styles.btn,
+                    {
+                      borderWidth: 1,
+                      borderColor: border,
+                      backgroundColor: "transparent",
+                    },
+                  ]}
                   onPress={handleCancel}
                   disabled={isSaving}
                 >
-                  <ThemedText style={{ fontWeight: "500", fontSize: 15, color: textColor }}>
+                  <ThemedText
+                    style={{
+                      fontWeight: "500",
+                      fontSize: 15,
+                      color: textColor,
+                    }}
+                  >
                     Cancel
                   </ThemedText>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={[styles.btn, { backgroundColor: accentBg, opacity: isSaving ? 0.6 : 1 }]}
+                  style={[
+                    styles.btn,
+                    { backgroundColor: accentBg, opacity: isSaving ? 0.6 : 1 },
+                  ]}
                   onPress={handleSave}
                   disabled={isSaving}
                 >
-                  {isSaving
-                    ? <ActivityIndicator size="small" color={accentText} />
-                    : <Text style={{ fontWeight: "600", fontSize: 15, color: accentText }}>Save</Text>
-                  }
+                  {isSaving ? (
+                    <ActivityIndicator size="small" color={accentText} />
+                  ) : (
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        fontSize: 15,
+                        color: accentText,
+                      }}
+                    >
+                      Save
+                    </Text>
+                  )}
                 </TouchableOpacity>
               </View>
             </>
           ) : (
             <>
-              <ThemedText style={[styles.cardTitle, { color: mutedText }]}>Account</ThemedText>
+              <ThemedText style={[styles.cardTitle, { color: mutedText }]}>
+                Account
+              </ThemedText>
 
               <View style={styles.infoRow}>
-                <ThemedText style={[styles.infoLabel, { color: mutedText }]}>Name</ThemedText>
-                <ThemedText style={[styles.infoValue, { color: textColor }]}>{name || "—"}</ThemedText>
+                <ThemedText style={[styles.infoLabel, { color: mutedText }]}>
+                  Name
+                </ThemedText>
+                <ThemedText style={[styles.infoValue, { color: textColor }]}>
+                  {name || "—"}
+                </ThemedText>
               </View>
               <View style={[styles.divider, { backgroundColor: border }]} />
               <View style={styles.infoRow}>
-                <ThemedText style={[styles.infoLabel, { color: mutedText }]}>Email</ThemedText>
-                <ThemedText style={[styles.infoValue, { color: textColor }]}>{email}</ThemedText>
+                <ThemedText style={[styles.infoLabel, { color: mutedText }]}>
+                  Email
+                </ThemedText>
+                <ThemedText style={[styles.infoValue, { color: textColor }]}>
+                  {email}
+                </ThemedText>
               </View>
 
               <TouchableOpacity
-                style={[styles.btn, { backgroundColor: accentBg, marginTop: 20 }]}
+                style={[
+                  styles.btn,
+                  { backgroundColor: accentBg, marginTop: 20 },
+                ]}
                 onPress={() => setIsEditing(true)}
               >
-                <Text style={{ fontWeight: "600", fontSize: 15, color: accentText }}>
+                <Text
+                  style={{ fontWeight: "600", fontSize: 15, color: accentText }}
+                >
                   Edit Profile
                 </Text>
               </TouchableOpacity>
@@ -223,19 +369,47 @@ const handleSignOut = async () => {
 
         {/* Sign out */}
         <TouchableOpacity
-          style={[styles.btnWide, { backgroundColor: dangerBg, opacity: isSigningOut ? 0.6 : 1 }]}
+          style={[
+            styles.btnWide,
+            { backgroundColor: dangerBg, opacity: isSigningOut ? 0.6 : 1 },
+          ]}
           onPress={handleSignOut}
           disabled={isSigningOut}
         >
-          {isSigningOut
-            ? <ActivityIndicator size="small" color={dangerText} />
-            : <Text style={{ fontWeight: "600", fontSize: 15, color: dangerText }}>Sign out</Text>
-          }
+          {isSigningOut ? (
+            <ActivityIndicator size="small" color={dangerText} />
+          ) : (
+            <Text
+              style={{ fontWeight: "600", fontSize: 15, color: dangerText }}
+            >
+              Sign out
+            </Text>
+          )}
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.btnWide,
+            { backgroundColor: dangerBg, opacity: isSigningOut ? 0.6 : 1 },
+          ]}
+          onPress={handleDeleteAccount}
+          disabled={isSigningOut}
+        >
+          {isSigningOut ? (
+            <ActivityIndicator size="small" color={dangerText} />
+          ) : (
+            <Text
+              style={{ fontWeight: "600", fontSize: 15, color: dangerText }}
+            >
+              Delete Account
+            </Text>
+          )}
         </TouchableOpacity>
 
         {session.session?.createdAt && (
           <ThemedText style={[styles.footer, { color: faintText }]}>
-            Signed in since {new Date(session.session.createdAt).toLocaleDateString()}
+            Signed in since{" "}
+            {new Date(session.session.createdAt).toLocaleDateString()}
           </ThemedText>
         )}
       </ScrollView>
@@ -317,7 +491,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   infoLabel: { fontSize: 14, fontWeight: "500" },
-  infoValue: { fontSize: 14, fontWeight: "500", maxWidth: "65%", textAlign: "right" },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: "500",
+    maxWidth: "65%",
+    textAlign: "right",
+  },
   divider: { height: 1 },
 
   label: { fontSize: 13, fontWeight: "500", marginBottom: 6, marginTop: 12 },

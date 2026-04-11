@@ -1,6 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { authClient } from "@/lib/auth-client";
+import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   Image,
@@ -36,13 +37,17 @@ export default function AuthScreen() {
   const handleSignUp = async () => {
     try {
       await authClient.signUp.email({ email, password, name });
+      router.push("/")
     } catch (err) {}
   };
 
   const handleSignIn = async () => {
     try {
       await authClient.signIn.email({ email, password });
-    } catch (err) {}
+      router.push("/")
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   return (
