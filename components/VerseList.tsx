@@ -13,6 +13,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import { ExpandableVerse } from "./expandableVerse";
 
 type SortOption = "recent" | "book" | "memorized";
 
@@ -162,7 +163,8 @@ export function VerseList({ userId, search, sort }: Props) {
       renderItem={({ item }) => {
         const ref = `${item.book} ${item.chapter}:${item.verseStart}${item.verseEnd ? `–${item.verseEnd}` : ""}`;
         return (
-          <TouchableOpacity
+          <ExpandableVerse
+            verse={item}
             style={[
               styles.card,
               {
@@ -175,13 +177,6 @@ export function VerseList({ userId, search, sort }: Props) {
                 borderColor: memorizedBorder,
               },
             ]}
-            onPress={() =>
-              router.push({
-                pathname: "/(app)/(protected)/practice",
-                params: { verseId: item._id },
-              })
-            }
-            activeOpacity={0.9}
           >
             <View style={styles.cardHeader}>
               <View style={styles.refRow}>
@@ -236,7 +231,7 @@ export function VerseList({ userId, search, sort }: Props) {
             >
               {item.text}
             </ThemedText>
-          </TouchableOpacity>
+          </ExpandableVerse>
         );
       }}
     />

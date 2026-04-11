@@ -16,6 +16,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { ThemedText } from "@/components/themed-text";
+import { ExpandableVerse } from "@/components/expandableVerse";
 
 export default function CollectionDetail() {
   const router = useRouter();
@@ -167,7 +168,8 @@ export default function CollectionDetail() {
             const ref = `${item.book} ${item.chapter}:${item.verseStart}${item.verseEnd ? `–${item.verseEnd}` : ""}`;
             const canRemove = item.addedBy === userId;
             return (
-              <TouchableOpacity
+              <ExpandableVerse
+              verse={item}
                 style={[
                   styles.card,
                   {
@@ -180,13 +182,6 @@ export default function CollectionDetail() {
                     borderColor: memorizedBorder,
                   },
                 ]}
-                onPress={() =>
-                  router.push({
-                    pathname: "/(app)/(protected)/practice",
-                    params: { verseId: item._id },
-                  })
-                }
-                activeOpacity={0.7}
               >
                 <View style={styles.cardHeader}>
                   <ThemedText style={[styles.ref, { color: textPrimary }]}>
@@ -220,7 +215,7 @@ export default function CollectionDetail() {
                 >
                   {item.text}
                 </ThemedText>
-              </TouchableOpacity>
+              </ExpandableVerse>
             );
           }}
         />

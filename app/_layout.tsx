@@ -13,6 +13,7 @@ import "react-native-reanimated";
 import { GestureHandlerRootView } from "react-native-gesture-handler"
 
 import { useColorScheme } from "@/hooks/use-color-scheme";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 // export const unstable_settings = {
 //   anchor: '(app)/(protected)/(tabs)/index.tsx',
@@ -26,17 +27,17 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   return (
-
-    <GestureHandlerRootView style={{flex: 1}}>
-    <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
-      <SplashScreenController />
-      <ConvexBetterAuthProvider client={convex} authClient={authClient}>
-        <RootNavigator />
-      </ConvexBetterAuthProvider>
-      <StatusBar style="auto" />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={colorScheme === "dark" ? DarkTheme : DefaultTheme}>
+        <BottomSheetModalProvider>
+          <SplashScreenController />
+          <ConvexBetterAuthProvider client={convex} authClient={authClient}>
+            <RootNavigator />
+          </ConvexBetterAuthProvider>
+        </BottomSheetModalProvider>
+        <StatusBar style="auto" />
+      </ThemeProvider>
     </GestureHandlerRootView>
-
   );
 }
 
