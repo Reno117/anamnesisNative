@@ -105,16 +105,8 @@ export function VerseList({ userId, search, sort }: Props) {
     return list;
   }, [verses, search, sort]);
 
-  if (verses === undefined) {
-    return (
-      <View style={styles.centered}>
-        <ActivityIndicator color={textPrimary} />
-      </View>
-    );
-  }
-
-  if (verses.length === 0) {
-    return (
+  const empty = (verses?.length === 0) ?
+     (
       <View style={styles.centered}>
         <ThemedText
           type="defaultSemiBold"
@@ -126,11 +118,9 @@ export function VerseList({ userId, search, sort }: Props) {
           Tap + Add to get started
         </ThemedText>
       </View>
-    );
-  }
-
-  if (filtered.length === 0) {
-    return (
+    )
+  : (filtered.length === 0) ? 
+     (
       <View style={styles.centered}>
         <ThemedText
           type="defaultSemiBold"
@@ -142,17 +132,17 @@ export function VerseList({ userId, search, sort }: Props) {
           Try a different search
         </ThemedText>
       </View>
-    );
-  }
+    ) : null;
 
   return (
     <FlatList
       data={filtered}
       keyExtractor={(v) => v._id}
       contentContainerStyle={styles.list}
+      keyboardDismissMode="interactive"
       refreshControl={
         <RefreshControl
-          refreshing={refreshing}
+          refreshing={refreshing || verses == undefined}
           onRefresh={onRefresh}
           tintColor="blue" // iOS spinner color
           colors={["blue", "green", "orange"]} // Android spinner colors
@@ -160,6 +150,7 @@ export function VerseList({ userId, search, sort }: Props) {
           titleColor="blue"
         />
       }
+      ListEmptyComponent={empty}
       renderItem={({ item }) => {
         const ref = `${item.book} ${item.chapter}:${item.verseStart}${item.verseEnd ? `–${item.verseEnd}` : ""}`;
         return (
@@ -192,7 +183,7 @@ export function VerseList({ userId, search, sort }: Props) {
                   <TouchableOpacity
                     onPress={() =>
                       router.push({
-                        pathname: "/(app)/(protected)/edit-modal",
+                        pathname: "/(app)/edit-modal",
                         params: { verseId: item._id },
                       })
                     }

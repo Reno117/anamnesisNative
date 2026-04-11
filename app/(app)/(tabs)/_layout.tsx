@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import React from "react";
 
+import {Image} from "react-native"
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { HapticTab } from "@/components/haptic-tab";
 import { Colors } from "@/constants/theme";
@@ -23,12 +24,16 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, focused }) => (
-            <Ionicons
-              size={28}
-              name={focused ? "home" : "home-outline"}
-              color={color}
-            />
+          tabBarIcon: ({ color, focused, size }) => (
+              <Image
+                source={require("../../../assets/images/llamapicture.png")}
+                style={{
+                  width: size + 20,
+                  height: size + 20,
+                  resizeMode: "contain",
+                  tintColor: color,
+                }}
+              />
           ),
         }}
       />

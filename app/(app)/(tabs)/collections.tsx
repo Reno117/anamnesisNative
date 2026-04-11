@@ -87,7 +87,7 @@ export default function CollectionsScreen() {
         <View style={styles.headerBtns}>
           <TouchableOpacity
             style={[styles.joinBtn, { borderColor: textPrimary }]}
-            onPress={() => router.push("/(app)/(protected)/join-collection")}
+            onPress={() => router.push("/(app)/join-collection")}
           >
             <ThemedText style={[styles.joinBtnText, { color: textPrimary }]}>Join</ThemedText>
           </TouchableOpacity>
@@ -164,7 +164,7 @@ export default function CollectionsScreen() {
                     style={[styles.inviteBtn, { borderColor: border }]}
                     onPress={() =>
                       router.push({
-                        pathname: "/(app)/(protected)/invite-screen",
+                        pathname: "/(app)/invite-screen",
                         params: {
                           groupId: item.ownerId,
                           collectionName: item.name,

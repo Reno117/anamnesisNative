@@ -66,7 +66,7 @@ export default function AuthScreen() {
           <View style={styles.header}>
             <View style={[styles.iconWrap]}>
               <Image
-                source={require("../../assets/images/llamapicture.png")}
+                source={require("../assets/images/llamapicture.png")}
                 style={{
                   width: 200,
                   height: 200,

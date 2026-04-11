@@ -1,23 +1,22 @@
+import { ThemedButton } from "@/components/themed-button";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { api } from "@/convex/_generated/api";
+import { Id } from "@/convex/_generated/dataModel";
+import { authClient } from "@/lib/auth-client";
+import { useMutation } from "convex/react";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState } from "react";
 import {
-  View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   TextInput,
   TouchableOpacity,
-  ActivityIndicator,
-  Platform,
-  Alert,
-  KeyboardAvoidingView,
+  View,
 } from "react-native";
-import { useRouter, useLocalSearchParams } from "expo-router";
-import { useMutation } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { authClient } from "@/lib/auth-client";
-import { Id } from "@/convex/_generated/dataModel";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { ThemedView } from "@/components/themed-view";
-import { ThemedText } from "@/components/themed-text";
-import { ThemedButton } from "@/components/themed-button";
 
 type CollectionType = "personal" | "shared";
 
@@ -84,7 +83,7 @@ export default function CreateCollectionModal() {
         // Navigate to invite screen so admin can share the code immediately
         router.dismiss();
         router.push({
-          pathname: "/(app)/(protected)/invite-screen",
+          pathname: "/(app)/invite-screen",
           params: { groupId, inviteCode, collectionName: name },
         });
       }
@@ -98,10 +97,10 @@ export default function CreateCollectionModal() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea} edges={["top", "bottom"]}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"} // try "height" for Android too
-        style={{ flex: 1 }}
-      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"} // try "height" for Android too
+          style={{ flex: 1 }}
+        >
           <View style={styles.scroll}>
             <ThemedText type="title" style={styles.title}>
               {isEditing ? "Edit Collection" : "New Collection"}
@@ -112,7 +111,7 @@ export default function CreateCollectionModal() {
             </ThemedText>
             <TextInput
               style={styles.input}
-              placeholder="e.g. Romans 8, Anxiety verses, Small Group S25..."
+              placeholder=""
               placeholderTextColor="#aaa"
               value={name}
               onChangeText={setName}
@@ -219,7 +218,7 @@ export default function CreateCollectionModal() {
               )}
             </ThemedButton>
           </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </ThemedView>
   );

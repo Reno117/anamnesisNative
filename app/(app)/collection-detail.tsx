@@ -199,7 +199,7 @@ export default function CollectionDetail() {
                     <TouchableOpacity
                       onPress={() =>
                         router.push({
-                          pathname: "/(app)/(protected)/edit-modal",
+                          pathname: "/(app)/edit-modal",
                           params: { verseId: item._id },
                         })
                       }

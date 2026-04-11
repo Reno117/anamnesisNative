@@ -66,8 +66,8 @@ export default function PracticeModal() {
 
       pathname:
         mode === "first-letter"
-          ? "/(app)/(protected)/practice-first-letter"
-          : "/(app)/(protected)/practice-full-verse",
+          ? "/(app)/practice-first-letter"
+          : "/(app)/practice-full-verse",
       params: { verseId },
     })
   }

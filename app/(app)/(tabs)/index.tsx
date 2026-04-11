@@ -77,7 +77,6 @@ export default function HomeScreen() {
       style={[styles.container, { backgroundColor: bg }]}
       edges={["top"]}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
 
       <ThemedView style={{ flex: 1 }}>
         {/* Header */}
@@ -147,7 +146,6 @@ export default function HomeScreen() {
           + Add Verse
         </ThemedButton>
       </ThemedView>
-      </TouchableWithoutFeedback>
     </SafeAreaView>
   );
 }
