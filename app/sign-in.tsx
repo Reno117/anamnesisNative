@@ -1,7 +1,7 @@
 import { ThemedText } from "@/components/themed-text";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { authClient } from "@/lib/auth-client";
-import { router } from "expo-router";
+import { Link, router } from "expo-router";
 import React, { useState } from "react";
 import {
   Image,
@@ -18,33 +18,31 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AuthScreen() {
-  const [name, setName] = useState("test");
+  const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("test@test.com");
   const [password, setPassword] = useState("password123");
-  {
-    /*  CHANGE THIS DEFAULT STATE   */
-  }
-  const scheme = useColorScheme();
 
+  const scheme = useColorScheme();
   const textColor = useThemeColor({}, "text");
   const bg = useThemeColor({}, "background");
-  const surface = useThemeColor({}, "card"); // card surface, not text
+  const surface = useThemeColor({}, "card");
   const border = useThemeColor({}, "border");
-  const inputBg = useThemeColor({}, "inputBackground"); // or secondary surface
+  const inputBg = useThemeColor({}, "inputBackground");
   const primary = useThemeColor({}, "tint");
   const muted = useThemeColor({}, "tabIconDefault");
 
   const handleSignUp = async () => {
     try {
       await authClient.signUp.email({ email, password, name });
-      router.push("/")
+      router.push("/");
     } catch (err) {}
   };
 
   const handleSignIn = async () => {
     try {
       await authClient.signIn.email({ email, password });
-      router.push("/")
+      router.push("/");
     } catch (err) {
       console.error(err);
     }
@@ -53,23 +51,17 @@ export default function AuthScreen() {
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"} // try "height" for Android too
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <ScrollView
-          contentContainerStyle={[
-            styles.scroll,
-            {
-              flexGrow: 1,
-              paddingBottom: 200, // Increase this — 80 is often not enough
-            },
-          ]}
+          contentContainerStyle={[styles.scroll, { paddingBottom: 200 }]}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
         >
           {/* Header */}
           <View style={styles.header}>
-            <View style={[styles.iconWrap]}>
+            <View style={styles.iconWrap}>
               <Image
                 source={require("../assets/images/llamapicture.png")}
                 style={{
@@ -83,7 +75,9 @@ export default function AuthScreen() {
           </View>
           <ThemedText style={styles.title}>Anamnesis</ThemedText>
           <ThemedText style={[styles.subtitle, { color: muted }]}>
-            Sign in to your account to continue
+            {mode === "signIn"
+              ? "Sign in to your account to continue"
+              : "Create a new account to get started"}
           </ThemedText>
 
           {/* Card */}
@@ -93,28 +87,30 @@ export default function AuthScreen() {
               { backgroundColor: surface, borderColor: border },
             ]}
           >
-            {/* Name */}
-            <View style={styles.fieldGroup}>
-              <ThemedText style={[styles.label, { color: muted }]}>
-                Full name
-              </ThemedText>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: textColor,
-                    borderColor: border,
-                    backgroundColor: inputBg,
-                  },
-                ]}
-                placeholder="Llama Smith"
-                placeholderTextColor={muted}
-                value={name}
-                onChangeText={setName}
-                autoCapitalize="words"
-                textContentType="name"
-              />
-            </View>
+            {/* Full Name — only shown in sign up mode */}
+            {mode === "signUp" && (
+              <View style={styles.fieldGroup}>
+                <ThemedText style={[styles.label, { color: muted }]}>
+                  Full name
+                </ThemedText>
+                <TextInput
+                  style={[
+                    styles.input,
+                    {
+                      color: textColor,
+                      borderColor: border,
+                      backgroundColor: inputBg,
+                    },
+                  ]}
+                  placeholder="Llama Smith"
+                  placeholderTextColor={muted}
+                  value={name}
+                  onChangeText={setName}
+                  autoCapitalize="words"
+                  textContentType="name"
+                />
+              </View>
+            )}
 
             {/* Email */}
             <View style={styles.fieldGroup}>
@@ -146,11 +142,7 @@ export default function AuthScreen() {
                 <ThemedText style={[styles.label, { color: muted }]}>
                   Password
                 </ThemedText>
-                <TouchableOpacity>
-                  <ThemedText style={[styles.forgotText, { color: muted }]}>
-                    Forgot password?
-                  </ThemedText>
-                </TouchableOpacity>
+                {/*Forgot password would go here */}
               </View>
               <TextInput
                 style={[
@@ -170,25 +162,28 @@ export default function AuthScreen() {
               />
             </View>
 
-            {/* Buttons */}
+            {/* Primary action button */}
             <View style={styles.actions}>
               <TouchableOpacity
                 style={[styles.primaryBtn, { backgroundColor: textColor }]}
-                onPress={handleSignIn}
+                onPress={mode === "signIn" ? handleSignIn : handleSignUp}
                 activeOpacity={0.85}
               >
-                <Text style={[styles.primaryText, { color: bg }]}>Sign in</Text>
+                <Text style={[styles.primaryText, { color: bg }]}>
+                  {mode === "signIn" ? "Sign in" : "Create account"}
+                </Text>
               </TouchableOpacity>
 
+              {/* Toggle mode */}
               <TouchableOpacity
                 style={[styles.secondaryBtn, { borderColor: border }]}
-                onPress={handleSignUp}
+                onPress={() => setMode(mode === "signIn" ? "signUp" : "signIn")}
                 activeOpacity={0.7}
               >
                 <ThemedText
                   style={[styles.secondaryText, { color: textColor }]}
                 >
-                  Create account
+                  {mode === "signIn" ? "Create account" : "Back to sign in"}
                 </ThemedText>
               </TouchableOpacity>
             </View>
@@ -197,8 +192,10 @@ export default function AuthScreen() {
           {/* Footer */}
           <ThemedText style={[styles.footer, { color: muted }]}>
             By continuing, you agree to our{" "}
-            <Text style={{ color: textColor }}>Terms</Text> and{" "}
-            <Text style={{ color: textColor }}>Privacy Policy</Text>
+            <Link href="https://docs.google.com/document/d/1JPHBDM4U40Veynen6SHx0yxi2NxDyjNnZM6oySzvlv8/edit?tab=t.0">
+              <Text style={{ color: textColor }}>Terms</Text> and{" "}
+              <Text style={{ color: textColor }}>Privacy Policy</Text>
+            </Link>
           </ThemedText>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -206,6 +203,7 @@ export default function AuthScreen() {
   );
 }
 
+// styles unchanged — paste your original StyleSheet here
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
