@@ -20,8 +20,10 @@ import { SafeAreaView } from "react-native-safe-area-context";
 export default function AuthScreen() {
   const [mode, setMode] = useState<"signIn" | "signUp">("signIn");
   const [name, setName] = useState("");
-  const [email, setEmail] = useState("test@test.com");
-  const [password, setPassword] = useState("password123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const scheme = useColorScheme();
   const textColor = useThemeColor({}, "text");
@@ -32,21 +34,85 @@ export default function AuthScreen() {
   const primary = useThemeColor({}, "tint");
   const muted = useThemeColor({}, "tabIconDefault");
 
+  function friendlyError(code: string | undefined, message: string | undefined): string {
+    switch (code) {
+      case "INVALID_EMAIL":
+        return "Please enter a valid email address."
+      case "INVALID_PASSWORD":
+        return "Incorrect password. Please try again."
+      case "USER_NOT_FOUND":
+        return "No account found with that email."
+      case "EMAIL_NOT_VERIFIED":
+        return "Please verify your email before signing in."
+      case "USER_ALREADY_EXISTS":
+        return "An account with this email already exists."
+      case "PASSWORD_TOO_SHORT":
+        return "Password must be at least 8 characters."
+      case "INVALID_EMAIL_OR_PASSWORD":
+        return "Incorrect email or password."
+      default:
+        return message ?? "Something went wrong. Please try again."
+    }
+  }
+
   const handleSignUp = async () => {
+    if (!name.trim()) {
+      setError("Please enter your full name.")
+      return
+    }
+    if (!email.trim()) {
+      setError("Please enter your email address.")
+      return
+    }
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters.")
+      return
+    }
+    setError("")
+    setLoading(true)
     try {
-      await authClient.signUp.email({ email, password, name });
-      router.push("/");
-    } catch (err) {}
-  };
+      const { error } = await authClient.signUp.email({ email, password, name })
+      if (error) {
+        setError(friendlyError(error.code, error.message))
+      } else {
+        router.push("/")
+      }
+    } catch (err: any) {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleSignIn = async () => {
-    try {
-      await authClient.signIn.email({ email, password });
-      router.push("/");
-    } catch (err) {
-      console.error(err);
+    if (!email.trim()) {
+      setError("Please enter your email address.")
+      return
     }
-  };
+    if (!password.trim()) {
+      setError("Please enter your password.")
+      return
+    }
+    setError("")
+    setLoading(true)
+    try {
+      const { error } = await authClient.signIn.email({ email, password })
+      if (error) {
+        setError(friendlyError(error.code, error.message))
+      } else {
+        router.push("/")
+      }
+    } catch (err: any) {
+      setError("Something went wrong. Please try again.")
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function handleSwitchMode() {
+    setMode(mode === "signIn" ? "signUp" : "signIn")
+    setError("") // clear errors when switching modes
+  }
 
   return (
     <SafeAreaView style={[styles.safe, { backgroundColor: bg }]}>
@@ -81,12 +147,7 @@ export default function AuthScreen() {
           </ThemedText>
 
           {/* Card */}
-          <View
-            style={[
-              styles.card,
-              { backgroundColor: surface, borderColor: border },
-            ]}
-          >
+          <View style={[styles.card, { backgroundColor: surface, borderColor: border }]}>
             {/* Full Name — only shown in sign up mode */}
             {mode === "signUp" && (
               <View style={styles.fieldGroup}>
@@ -94,18 +155,11 @@ export default function AuthScreen() {
                   Full name
                 </ThemedText>
                 <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      color: textColor,
-                      borderColor: border,
-                      backgroundColor: inputBg,
-                    },
-                  ]}
+                  style={[styles.input, { color: textColor, borderColor: border, backgroundColor: inputBg }]}
                   placeholder="Llama Smith"
                   placeholderTextColor={muted}
                   value={name}
-                  onChangeText={setName}
+                  onChangeText={(v) => { setName(v); setError("") }}
                   autoCapitalize="words"
                   textContentType="name"
                 />
@@ -118,18 +172,11 @@ export default function AuthScreen() {
                 Email address
               </ThemedText>
               <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: textColor,
-                    borderColor: border,
-                    backgroundColor: inputBg,
-                  },
-                ]}
+                style={[styles.input, { color: textColor, borderColor: border, backgroundColor: inputBg }]}
                 placeholder="jane@example.com"
                 placeholderTextColor={muted}
                 value={email}
-                onChangeText={setEmail}
+                onChangeText={(v) => { setEmail(v); setError("") }}
                 autoCapitalize="none"
                 keyboardType="email-address"
                 textContentType="emailAddress"
@@ -142,47 +189,47 @@ export default function AuthScreen() {
                 <ThemedText style={[styles.label, { color: muted }]}>
                   Password
                 </ThemedText>
-                {/*Forgot password would go here */}
               </View>
               <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: textColor,
-                    borderColor: border,
-                    backgroundColor: inputBg,
-                  },
-                ]}
+                style={[styles.input, { color: textColor, borderColor: border, backgroundColor: inputBg }]}
                 placeholder="••••••••"
                 placeholderTextColor={muted}
                 value={password}
-                onChangeText={setPassword}
+                onChangeText={(v) => { setPassword(v); setError("") }}
                 secureTextEntry
                 textContentType="password"
               />
             </View>
 
+            {/* Error message */}
+            {error ? (
+              <View style={styles.errorBox}>
+                <ThemedText style={styles.errorText}>{error}</ThemedText>
+              </View>
+            ) : null}
+
             {/* Primary action button */}
             <View style={styles.actions}>
               <TouchableOpacity
-                style={[styles.primaryBtn, { backgroundColor: textColor }]}
+                style={[styles.primaryBtn, { backgroundColor: textColor }, loading && styles.btnDisabled]}
                 onPress={mode === "signIn" ? handleSignIn : handleSignUp}
                 activeOpacity={0.85}
+                disabled={loading}
               >
                 <Text style={[styles.primaryText, { color: bg }]}>
-                  {mode === "signIn" ? "Sign in" : "Create account"}
+                  {loading
+                    ? mode === "signIn" ? "Signing in..." : "Creating account..."
+                    : mode === "signIn" ? "Sign in" : "Create account"
+                  }
                 </Text>
               </TouchableOpacity>
 
-              {/* Toggle mode */}
               <TouchableOpacity
                 style={[styles.secondaryBtn, { borderColor: border }]}
-                onPress={() => setMode(mode === "signIn" ? "signUp" : "signIn")}
+                onPress={handleSwitchMode}
                 activeOpacity={0.7}
               >
-                <ThemedText
-                  style={[styles.secondaryText, { color: textColor }]}
-                >
+                <ThemedText style={[styles.secondaryText, { color: textColor }]}>
                   {mode === "signIn" ? "Create account" : "Back to sign in"}
                 </ThemedText>
               </TouchableOpacity>
@@ -192,7 +239,7 @@ export default function AuthScreen() {
           {/* Footer */}
           <ThemedText style={[styles.footer, { color: muted }]}>
             By continuing, you agree to our{" "}
-            <Link href="https://docs.google.com/document/d/1JPHBDM4U40Veynen6SHx0yxi2NxDyjNnZM6oySzvlv8/edit?tab=t.0">
+            <Link href="https://docs.google.com/document/d/1JPHBDM4U40Veynen6SHx0yxi2NxDyjNnZM6oySzvlv8/edit?tab=t.0" target="_blank">
               <Text style={{ color: textColor }}>Terms</Text> and{" "}
               <Text style={{ color: textColor }}>Privacy Policy</Text>
             </Link>
@@ -203,7 +250,6 @@ export default function AuthScreen() {
   );
 }
 
-// styles unchanged — paste your original StyleSheet here
 const styles = StyleSheet.create({
   safe: { flex: 1 },
   flex: { flex: 1 },
@@ -213,15 +259,10 @@ const styles = StyleSheet.create({
     padding: 24,
     gap: 24,
   },
-  // header: {
-  //   gap: 6,
-  //   marginBottom: 4,
-  // },
-
   header: {
-    flex: 1, // fill the available space
-    justifyContent: "center", // vertical center
-    alignItems: "center", // horizontal center
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
     padding: 20,
   },
   iconWrap: {
@@ -231,33 +272,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 20,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: "500",
-  },
-  subtitle: {
-    fontSize: 15,
-  },
+  title: { fontSize: 26, fontWeight: "500" },
+  subtitle: { fontSize: 15 },
   card: {
     borderRadius: 16,
     borderWidth: 0.5,
     padding: 20,
     gap: 16,
   },
-  fieldGroup: {
-    gap: 6,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: "500",
-  },
+  fieldGroup: { gap: 6 },
+  label: { fontSize: 13, fontWeight: "500" },
   labelRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-  },
-  forgotText: {
-    fontSize: 13,
   },
   input: {
     borderWidth: 0.5,
@@ -266,32 +294,37 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     fontSize: 15,
   },
-  actions: {
-    gap: 10,
-    marginTop: 4,
+  errorBox: {
+    backgroundColor: "#fff5f5",
+    borderWidth: 1,
+    borderColor: "#ffcdd2",
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
+  errorText: {
+    color: "#c62828",
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  actions: { gap: 10, marginTop: 4 },
   primaryBtn: {
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
   },
-  primaryText: {
-    fontSize: 15,
-    fontWeight: "500",
-  },
+  btnDisabled: { opacity: 0.5 },
+  primaryText: { fontSize: 15, fontWeight: "500" },
   secondaryBtn: {
     paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
     borderWidth: 0.5,
   },
-  secondaryText: {
-    fontSize: 15,
-    fontWeight: "500",
-  },
+  secondaryText: { fontSize: 15, fontWeight: "500" },
   footer: {
     textAlign: "center",
     fontSize: 13,
     lineHeight: 18,
   },
-});
+})
