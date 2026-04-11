@@ -3,6 +3,7 @@ To Do list:
    Must have:
       -Forgot password (Or just remove until it's done)
       -Terms of service / privacy policy
+      -Delete user account in Profile page (can use the same function as sign up)
 
 
 
@@ -11,4 +12,4 @@ To Do list:
       -Border color for main screen (for dark mode)
       -Safe area view colors need to be consistent
       -Colored book picker (Different sorting options for book picker (will be in profile settings page for max))
-      -
+      -Screen is jittery when entering practice mode

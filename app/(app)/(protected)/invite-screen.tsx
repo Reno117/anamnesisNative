@@ -175,11 +175,11 @@ const styles = StyleSheet.create({
   },
   codeLabel: {
     fontSize: 13,
-    color: "#aaa",
+    color: "black",
     marginBottom: 8,
     letterSpacing: 0.5,
   },
-  code: { fontSize: 42, fontWeight: "700", letterSpacing: 6, lineHeight: -5 },
+  code: { fontSize: 42, fontWeight: "700", letterSpacing: 6, lineHeight: -5, color: "black" },
   btnRow: { flexDirection: "row", gap: 12, marginBottom: 36 },
   membersTitle: { fontSize: 16, marginBottom: 16 },
   memberRow: {

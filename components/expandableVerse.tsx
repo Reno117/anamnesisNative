@@ -75,12 +75,12 @@ export function ExpandableVerse({
 
   function goToMode(mode: "first-letter" | "full-verse") {
     bottomSheetRef.current?.dismiss();
-    router.replace({
+    router.push({
       pathname:
         mode === "first-letter"
           ? "/(app)/(protected)/practice-first-letter"
           : "/(app)/(protected)/practice-full-verse",
-      params: { verse: verse._id },
+      params: { verseId: verse._id },
     });
   }
   return (
