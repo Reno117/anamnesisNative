@@ -32,8 +32,20 @@ export const getCollectionsForVerse = query({
       entries.map((e) => ctx.db.get(e.collectionId))
     )
 
-    // Only return collections owned by this user
-    return collections.filter((c) => c && c.ownerId === userId)
+    // Get groups the user belongs to
+    const memberships = await ctx.db
+      .query("groupMembers")
+      .withIndex("by_user", (q) => q.eq("userId", userId))
+      .collect()
+    const groupIds = memberships.map((m) => m.groupId)
+
+    // Return collections owned by user OR by a group the user belongs to
+    return collections.filter((c) => {
+      if (!c) return false
+      if (c.ownerType === "user" && c.ownerId === userId) return true
+      if (c.ownerType === "group" && groupIds.includes(c.ownerId as any)) return true
+      return false
+    })
   },
 })
 
