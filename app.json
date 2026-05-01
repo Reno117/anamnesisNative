@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "anamnesisnative",
+    "name": "Anamnesis",
     "slug": "anamnesisnative",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/app_icon_1024.png",
-    "scheme": "anamnesisnative",
+    "icon": "./assets/images/llamalogo.png",
+    "scheme": "anamnesis",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
@@ -28,7 +28,7 @@
     "web": {
       "output": "static",
       "bundler": "metro",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/newllamafavicon.png"
     },
     "plugins": [
       "expo-router",
