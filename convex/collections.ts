@@ -4,13 +4,11 @@ import { mutation, query } from "./_generated/server";
 export const listCollections = query({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
-    // Personal collections
     const personal = await ctx.db
       .query("collections")
       .withIndex("by_owner", (q) => q.eq("ownerId", userId))
       .collect()
 
-    // Group collections the user belongs to
     const memberships = await ctx.db
       .query("groupMembers")
       .withIndex("by_user", (q) => q.eq("userId", userId))
@@ -33,14 +31,28 @@ export const listCollections = query({
       ...groupCollections.map((c) => ({ ...c, isShared: true })),
     ]
 
-    // Attach verse counts
+    function verseCount(v: { verseStart: number; verseEnd?: number }): number {
+      return v.verseEnd ? v.verseEnd - v.verseStart + 1 : 1
+    }
+
     const withCounts = await Promise.all(
       all.map(async (col) => {
-        const verses = await ctx.db
+        const entries = await ctx.db
           .query("collectionVerses")
           .withIndex("by_collection", (q) => q.eq("collectionId", col._id))
           .collect()
-        return { ...col, verseCount: verses.length }
+
+        // Look up the actual verse docs to get verseStart/verseEnd
+        const verses = await Promise.all(
+          entries.map((e) => ctx.db.get(e.verseId))
+        )
+
+        const total = verses.reduce((sum, v) => {
+          if (!v) return sum
+          return sum + verseCount(v)
+        }, 0)
+
+        return { ...col, verseCount: total }
       })
     )
 

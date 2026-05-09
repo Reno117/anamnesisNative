@@ -105,6 +105,10 @@ export default function CollectionDetail() {
       </SafeAreaView>
     );
   }
+  const totalVerseCount = verses?.reduce((sum, v) => {
+  if (!v) return sum
+  return sum + (v.verseEnd ? v.verseEnd - v.verseStart + 1 : 1)
+}, 0) ?? 0
 
   return (
     <SafeAreaView
@@ -145,7 +149,7 @@ export default function CollectionDetail() {
           </Text>
         ) : null}
         <Text style={[styles.verseCountText, { color: textFaint }]}>
-          {verses.length} {verses.length === 1 ? "verse" : "verses"}
+          {totalVerseCount} {totalVerseCount === 1 ? "verse" : "verses"}
         </Text>
       </View>
 
