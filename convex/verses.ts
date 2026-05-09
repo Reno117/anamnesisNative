@@ -113,37 +113,47 @@ export const getVerse = query({
   },
 });
 
+
+
 export const verseStats = query({
   args: { userId: v.string() },
   handler: async (ctx, { userId }) => {
     const verses = await ctx.db
       .query("verses")
       .withIndex("by_user", (q) => q.eq("userId", userId))
-      .collect();
+      .collect()
 
-    const total = verses.length;
-    const memorized = verses.filter((v) => v.isMemorized).length;
-    const remaining = total - memorized;
-
-    const now = Date.now();
-    const REVIEW_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-
-    const needsReview = verses.filter((v) => {
-      if (!v.isMemorized) return false;
-      if (!v.lastReviewedAt) return true;
-      return now - v.lastReviewedAt > REVIEW_THRESHOLD_MS;
-    });
-
-    const byBook: Record<string, { total: number; memorized: number }> = {};
-    for (const verse of verses) {
-      if (!byBook[verse.book]) byBook[verse.book] = { total: 0, memorized: 0 };
-      byBook[verse.book].total++;
-      if (verse.isMemorized) byBook[verse.book].memorized++;
+    function verseCount(v: { verseStart: number; verseEnd?: number }): number {
+      return v.verseEnd ? v.verseEnd - v.verseStart + 1 : 1
     }
 
-    return { total, memorized, remaining, byBook, needsReview };
+    const total = verses.reduce((sum, v) => sum + verseCount(v), 0)
+    const memorized = verses
+      .filter((v) => v.isMemorized)
+      .reduce((sum, v) => sum + verseCount(v), 0)
+    const remaining = total - memorized
+
+    const now = Date.now()
+    const REVIEW_THRESHOLD_MS = 7 * 24 * 60 * 60 * 1000
+
+    const needsReview = verses.filter((v) => {
+      if (!v.isMemorized) return false
+      if (!v.lastReviewedAt) return true
+      return now - v.lastReviewedAt > REVIEW_THRESHOLD_MS
+    })
+
+    const byBook: Record<string, { total: number; memorized: number }> = {}
+    for (const verse of verses) {
+      if (!byBook[verse.book]) byBook[verse.book] = { total: 0, memorized: 0 }
+      const count = verseCount(verse)
+      byBook[verse.book].total += count
+      if (verse.isMemorized) byBook[verse.book].memorized += count
+    }
+
+    return { total, memorized, remaining, byBook, needsReview }
   },
-});
+})
+
 
 export const getVerseText = action({
   args: {
